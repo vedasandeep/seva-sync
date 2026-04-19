@@ -1,26 +1,52 @@
 import { useEffect, useState } from 'react';
-import { useTasks, useAuth, useSync, useGeolocation } from '../hooks';
-import { fetchTasks, fetchNearbyTasks, acceptTask, completeTask } from '../lib/api';
-import type { CSSProperties } from 'react';
+import { useAuth } from '../features/auth/hooks';
+import { useTasks, useTaskAssignment } from '../features/tasks/hooks';
+import { TaskList } from '../features/tasks/components';
+import { useOffline, useOfflineSync } from '../hooks';
+import { fetchTasks, fetchNearbyTasks } from '../lib/api';
+import { Layout, Tabs, Button } from '../components';
 
 export default function TasksPage() {
   const { volunteer } = useAuth();
-  const { tasks, refresh: refreshTasks } = useTasks();
-  const { sync, syncing, online } = useSync();
-  const { location } = useGeolocation();
-  const [activeTab, setActiveTab] = useState<'my' | 'nearby'>('my');
+  const { tasks, loadFromDB } = useTasks();
+  const { acceptTask, completeTask } = useTaskAssignment();
+  const { isOffline } = useOffline();
+  const { syncNow, syncing, pendingSyncCount } = useOfflineSync();
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingTaskId, setLoadingTaskId] = useState<string | null>(null);
 
-  // Fetch tasks on mount and when online
+  // Load tasks from DB on mount
   useEffect(() => {
-    if (online && volunteer) {
+    loadFromDB();
+  }, [loadFromDB]);
+
+  // Fetch tasks when online
+  useEffect(() => {
+    if (!isOffline && volunteer) {
       setLoading(true);
       fetchTasks().then(() => {
-        refreshTasks();
+        loadFromDB();
         setLoading(false);
       });
     }
-  }, [online, volunteer, refreshTasks]);
+  }, [isOffline, volunteer, loadFromDB]);
+
+  // Get location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+        },
+        (err) => console.error('Geolocation error:', err),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+  }, []);
 
   const handleFetchNearby = async () => {
     if (!location) {
@@ -29,297 +55,90 @@ export default function TasksPage() {
     }
     setLoading(true);
     await fetchNearbyTasks(location.lat, location.lon);
-    await refreshTasks();
+    await loadFromDB();
     setLoading(false);
   };
 
-  const handleAccept = async (taskId: string) => {
-    const result = await acceptTask(taskId);
-    if (result.success) {
-      await refreshTasks();
-      if ((result.data as { queued?: boolean })?.queued) {
-        alert('Task accepted (will sync when online)');
+  const handleAcceptTask = async (taskId: string) => {
+    setLoadingTaskId(taskId);
+    try {
+      const result = await acceptTask(taskId);
+      if (result.success) {
+        await loadFromDB();
       }
+    } finally {
+      setLoadingTaskId(null);
     }
   };
 
-  const handleComplete = async (taskId: string) => {
-    const result = await completeTask(taskId);
-    if (result.success) {
-      await refreshTasks();
-      if ((result.data as { queued?: boolean })?.queued) {
-        alert('Task completed (will sync when online)');
+  const handleCompleteTask = async (taskId: string) => {
+    setLoadingTaskId(taskId);
+    try {
+      const result = await completeTask(taskId);
+      if (result.success) {
+        await loadFromDB();
       }
+    } finally {
+      setLoadingTaskId(null);
     }
   };
 
   const myTasks = tasks.filter((t) => t.status === 'IN_PROGRESS');
   const nearbyTasks = tasks.filter((t) => t.status === 'OPEN');
 
+  const tabs = [
+    {
+      label: `My Tasks (${myTasks.length})`,
+      value: 'my',
+      content: (
+        <TaskList
+          tasks={myTasks}
+          loading={loading}
+          empty="No active tasks. Check nearby tasks!"
+          onTaskComplete={handleCompleteTask}
+          loadingTaskId={loadingTaskId}
+        />
+      ),
+    },
+    {
+      label: `Nearby (${nearbyTasks.length})`,
+      value: 'nearby',
+      content: (
+        <TaskList
+          tasks={nearbyTasks}
+          loading={loading}
+          empty="No nearby tasks found."
+          onTaskAccept={handleAcceptTask}
+          loadingTaskId={loadingTaskId}
+        />
+      ),
+    },
+  ];
+
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Tasks</h1>
-          <p style={styles.greeting}>Hello, {volunteer?.name}</p>
-        </div>
-        <div style={getStatusBadgeStyle(online)}>
-          {online ? 'Online' : 'Offline'}
-        </div>
-      </header>
-
-      {/* Sync Banner */}
-      {!online && (
-        <div style={styles.offlineBanner}>
-          You're offline. Changes will sync when connected.
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div style={styles.tabs}>
-        <button
-          style={getTabStyle(activeTab === 'my')}
-          onClick={() => setActiveTab('my')}
-        >
-          My Tasks ({myTasks.length})
-        </button>
-        <button
-          style={getTabStyle(activeTab === 'nearby')}
-          onClick={() => setActiveTab('nearby')}
-        >
-          Nearby ({nearbyTasks.length})
-        </button>
-      </div>
-
-      {/* Actions */}
-      <div style={styles.actions}>
-        {activeTab === 'nearby' && (
-          <button onClick={handleFetchNearby} style={styles.actionBtn} disabled={!online}>
+    <Layout title="Tasks" volunteerName={volunteer?.name || 'Volunteer'}>
+      <div className="space-y-6">
+        {/* Actions */}
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            onClick={handleFetchNearby}
+            disabled={!location || isOffline}
+            variant="secondary"
+          >
             Find Nearby Tasks
-          </button>
-        )}
-        <button onClick={sync} style={styles.actionBtn} disabled={syncing || !online}>
-          {syncing ? 'Syncing...' : 'Sync Now'}
-        </button>
-      </div>
+          </Button>
+          <Button
+            onClick={() => syncNow()}
+            loading={syncing}
+            disabled={syncing || !isOffline || pendingSyncCount === 0}
+          >
+            {syncing ? 'Syncing...' : `Sync Now (${pendingSyncCount})`}
+          </Button>
+        </div>
 
-      {/* Task List */}
-      <div style={styles.taskList}>
-        {loading ? (
-          <p style={styles.empty}>Loading...</p>
-        ) : activeTab === 'my' ? (
-          myTasks.length === 0 ? (
-            <p style={styles.empty}>No active tasks. Check nearby tasks!</p>
-          ) : (
-            myTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onComplete={() => handleComplete(task.id)}
-              />
-            ))
-          )
-        ) : nearbyTasks.length === 0 ? (
-          <p style={styles.empty}>No nearby tasks found.</p>
-        ) : (
-          nearbyTasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onAccept={() => handleAccept(task.id)}
-            />
-          ))
-        )}
+        {/* Tabs */}
+        <Tabs tabs={tabs} defaultValue="my" />
       </div>
-    </div>
+    </Layout>
   );
 }
-
-function TaskCard({
-  task,
-  onAccept,
-  onComplete,
-}: {
-  task: { id: string; title: string; description?: string; urgency: string; status: string; syncStatus: string };
-  onAccept?: () => void;
-  onComplete?: () => void;
-}) {
-  const urgencyColors: Record<string, string> = {
-    CRITICAL: '#dc2626',
-    HIGH: '#f97316',
-    MEDIUM: '#eab308',
-    LOW: '#22c55e',
-  };
-
-  return (
-    <div style={styles.card}>
-      <div style={styles.cardHeader}>
-        <h3 style={styles.cardTitle}>{task.title}</h3>
-        <span style={{ ...styles.urgencyBadge, background: urgencyColors[task.urgency] || '#6b7280' }}>
-          {task.urgency}
-        </span>
-      </div>
-      {task.description && <p style={styles.cardDesc}>{task.description}</p>}
-      <div style={styles.cardFooter}>
-        {task.syncStatus === 'pending' && (
-          <span style={styles.pendingBadge}>Pending sync</span>
-        )}
-        {onAccept && (
-          <button onClick={onAccept} style={styles.acceptBtn}>
-            Accept Task
-          </button>
-        )}
-        {onComplete && (
-          <button onClick={onComplete} style={styles.completeBtn}>
-            Mark Complete
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Dynamic style functions
-const getStatusBadgeStyle = (online: boolean): CSSProperties => ({
-  padding: '0.25rem 0.75rem',
-  borderRadius: '9999px',
-  fontSize: '0.75rem',
-  fontWeight: 600,
-  background: online ? '#22c55e' : '#ef4444',
-});
-
-const getTabStyle = (active: boolean): CSSProperties => ({
-  flex: 1,
-  padding: '1rem',
-  border: 'none',
-  background: 'transparent',
-  fontWeight: 600,
-  color: active ? '#1e40af' : '#64748b',
-  borderBottom: active ? '2px solid #1e40af' : '2px solid transparent',
-  cursor: 'pointer',
-});
-
-// Static styles
-const styles: Record<string, CSSProperties> = {
-  container: {
-    minHeight: '100vh',
-    background: '#f1f5f9',
-  },
-  header: {
-    background: '#1e40af',
-    color: 'white',
-    padding: '1rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    margin: 0,
-    fontSize: '1.5rem',
-  },
-  greeting: {
-    margin: '0.25rem 0 0',
-    fontSize: '0.875rem',
-    opacity: 0.9,
-  },
-  offlineBanner: {
-    background: '#fef3c7',
-    color: '#92400e',
-    padding: '0.75rem 1rem',
-    fontSize: '0.875rem',
-    textAlign: 'center',
-  },
-  tabs: {
-    display: 'flex',
-    background: 'white',
-    borderBottom: '1px solid #e5e7eb',
-  },
-  actions: {
-    display: 'flex',
-    gap: '0.5rem',
-    padding: '1rem',
-  },
-  actionBtn: {
-    flex: 1,
-    padding: '0.75rem',
-    border: '1px solid #1e40af',
-    background: 'white',
-    color: '#1e40af',
-    borderRadius: '0.5rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
-  taskList: {
-    padding: '0 1rem 1rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem',
-  },
-  empty: {
-    textAlign: 'center',
-    color: '#64748b',
-    padding: '2rem',
-  },
-  card: {
-    background: 'white',
-    borderRadius: '0.75rem',
-    padding: '1rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: '0.5rem',
-  },
-  cardTitle: {
-    margin: 0,
-    fontSize: '1rem',
-    color: '#1f2937',
-  },
-  urgencyBadge: {
-    padding: '0.25rem 0.5rem',
-    borderRadius: '0.25rem',
-    fontSize: '0.625rem',
-    fontWeight: 700,
-    color: 'white',
-    textTransform: 'uppercase',
-  },
-  cardDesc: {
-    margin: '0.5rem 0 0',
-    fontSize: '0.875rem',
-    color: '#6b7280',
-  },
-  cardFooter: {
-    marginTop: '1rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  pendingBadge: {
-    fontSize: '0.75rem',
-    color: '#f97316',
-    fontWeight: 500,
-  },
-  acceptBtn: {
-    padding: '0.5rem 1rem',
-    background: '#22c55e',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.375rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-    marginLeft: 'auto',
-  },
-  completeBtn: {
-    padding: '0.5rem 1rem',
-    background: '#1e40af',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.375rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-    marginLeft: 'auto',
-  },
-};

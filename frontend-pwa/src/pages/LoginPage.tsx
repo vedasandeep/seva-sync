@@ -1,14 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginVolunteer } from '../lib/api';
-import { useAuth } from '../hooks';
+import { useAuth } from '../features/auth/hooks';
+import { Button, Input, Card } from '../components';
 
 export default function LoginPage() {
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { refresh } = useAuth();
+  const { isLoggedIn } = useAuth();
+
+  // Redirect if already logged in
+  if (isLoggedIn) {
+    navigate('/tasks');
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +31,6 @@ export default function LoginPage() {
     const result = await loginVolunteer(formattedPhone);
 
     if (result.success) {
-      await refresh();
       navigate('/tasks');
     } else {
       setError(result.error || 'Login failed. Please try again.');
@@ -34,110 +40,43 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>SevaSync</h1>
-        <p style={styles.subtitle}>Volunteer Login</p>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-600 to-blue-400">
+      <Card className="w-full max-w-md">
+        <div className="space-y-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-blue-600 mb-2">SevaSync</h1>
+            <p className="text-gray-600">Volunteer Login</p>
+          </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <label style={styles.label}>
-            Phone Number
-            <input
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
               type="tel"
+              label="Phone Number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="9876543210"
-              style={styles.input}
+              error={error ? error : undefined}
+              helperText="Enter your registered phone number"
               required
             />
-          </label>
 
-          {error && <p style={styles.error}>{error}</p>}
+            <Button
+              type="submit"
+              fullWidth
+              loading={loading}
+              disabled={!phone || loading}
+            >
+              {loading ? 'Logging in...' : 'Login'}
+            </Button>
+          </form>
 
-          <button type="submit" disabled={loading} style={styles.button}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-
-        <p style={styles.hint}>
-          Enter your registered phone number to login.
-          <br />
-          New volunteer? Contact your coordinator.
-        </p>
-      </div>
+          <p className="text-center text-sm text-gray-600">
+            Enter your registered phone number to login.
+            <br />
+            New volunteer? Contact your coordinator.
+          </p>
+        </div>
+      </Card>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '1rem',
-    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-  },
-  card: {
-    background: 'white',
-    borderRadius: '1rem',
-    padding: '2rem',
-    width: '100%',
-    maxWidth: '400px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-  },
-  title: {
-    margin: 0,
-    fontSize: '2rem',
-    color: '#1e40af',
-    textAlign: 'center',
-  },
-  subtitle: {
-    margin: '0.5rem 0 2rem',
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-  },
-  label: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem',
-    color: '#374151',
-    fontWeight: 500,
-  },
-  input: {
-    padding: '0.75rem 1rem',
-    fontSize: '1rem',
-    border: '2px solid #e5e7eb',
-    borderRadius: '0.5rem',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  },
-  button: {
-    padding: '0.875rem 1rem',
-    fontSize: '1rem',
-    fontWeight: 600,
-    color: 'white',
-    background: '#1e40af',
-    border: 'none',
-    borderRadius: '0.5rem',
-    cursor: 'pointer',
-    marginTop: '0.5rem',
-  },
-  error: {
-    color: '#dc2626',
-    fontSize: '0.875rem',
-    margin: 0,
-  },
-  hint: {
-    marginTop: '1.5rem',
-    fontSize: '0.875rem',
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 1.5,
-  },
-};

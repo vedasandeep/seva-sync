@@ -1,226 +1,145 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, useOnlineStatus, useGeolocation } from '../hooks';
+import { useAuth } from '../features/auth/hooks';
+import { useOffline } from '../hooks';
 import { logout, updateLocation } from '../lib/api';
-
-// Dynamic style function - extracted to avoid mixed types in styles object
-const getStatusBadgeStyle = (online: boolean): React.CSSProperties => ({
-  padding: '0.25rem 0.75rem',
-  borderRadius: '9999px',
-  fontSize: '0.75rem',
-  fontWeight: 600,
-  background: online ? '#22c55e' : '#ef4444',
-});
+import { Layout, Card, Button, Badge, Avatar } from '../components';
 
 export default function ProfilePage() {
-  const { volunteer, refresh } = useAuth();
-  const online = useOnlineStatus();
-  const { location, refresh: refreshLocation } = useGeolocation();
+  const { volunteer, logout: logoutStore } = useAuth();
+  const { isOffline } = useOffline();
   const navigate = useNavigate();
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Get location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+        },
+        (err) => console.error('Geolocation error:', err),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+  }, []);
 
   const handleLogout = async () => {
-    await logout();
-    await refresh();
-    navigate('/login');
+    if (confirm('Are you sure you want to logout?')) {
+      await logout();
+      logoutStore();
+      navigate('/login');
+    }
   };
 
   const handleUpdateLocation = async () => {
     if (!location) {
-      refreshLocation();
+      alert('Location not available. Please enable location services.');
       return;
     }
-    const result = await updateLocation(location.lat, location.lon);
-    if (result.success) {
-      alert('Location updated!');
+
+    setLoading(true);
+    try {
+      const result = await updateLocation(location.lat, location.lon);
+      if (result.success) {
+        alert('Location updated successfully!');
+      } else {
+        alert('Failed to update location: ' + (result.error || 'Unknown error'));
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   if (!volunteer) {
-    return <p>Loading...</p>;
+    return (
+      <Layout title="Profile">
+        <p className="text-center text-gray-600">Loading...</p>
+      </Layout>
+    );
   }
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>Profile</h1>
-        <div style={getStatusBadgeStyle(online)}>
-          {online ? 'Online' : 'Offline'}
-        </div>
-      </header>
-
-      <div style={styles.content}>
-        {/* Profile Card */}
-        <div style={styles.card}>
-          <div style={styles.avatar}>
-            {volunteer.name.charAt(0).toUpperCase()}
+    <Layout title="Profile" volunteerName={volunteer.name}>
+      <div className="space-y-6 max-w-2xl">
+        {/* Profile Header */}
+        <Card>
+          <div className="flex items-start gap-4">
+            <Avatar name={volunteer.name} size="lg" />
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-900">{volunteer.name}</h2>
+              <p className="text-gray-600 text-sm mt-1">📱 {volunteer.phone}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {volunteer.skills && volunteer.skills.length > 0 ? (
+                  volunteer.skills.map((skill) => (
+                    <Badge key={skill} variant="primary">
+                      {skill}
+                    </Badge>
+                  ))
+                ) : (
+                  <Badge variant="default">No skills added</Badge>
+                )}
+              </div>
+            </div>
           </div>
-          <h2 style={styles.name}>{volunteer.name}</h2>
-          <p style={styles.phone}>{volunteer.phone}</p>
-        </div>
+        </Card>
 
-        {/* Skills */}
-        <div style={styles.section}>
-          <h3 style={styles.sectionTitle}>Skills</h3>
-          <div style={styles.skills}>
-            {volunteer.skills.map((skill) => (
-              <span key={skill} style={styles.skillBadge}>
-                {skill}
-              </span>
-            ))}
+        {/* Location Section */}
+        <Card>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Location</h3>
+          <div className="space-y-3">
+            {location ? (
+              <>
+                <p className="text-gray-700 text-sm">
+                  <span className="font-medium">Latitude:</span> {location.lat.toFixed(6)}
+                </p>
+                <p className="text-gray-700 text-sm">
+                  <span className="font-medium">Longitude:</span> {location.lon.toFixed(6)}
+                </p>
+              </>
+            ) : (
+              <p className="text-gray-600 text-sm">Location not available</p>
+            )}
+            <Button
+              onClick={handleUpdateLocation}
+              loading={loading}
+              disabled={!location || isOffline}
+              variant="primary"
+            >
+              {loading ? 'Updating...' : 'Update Location'}
+            </Button>
           </div>
-        </div>
+        </Card>
 
-        {/* Location */}
-        <div style={styles.section}>
-          <h3 style={styles.sectionTitle}>Location</h3>
-          {location ? (
-            <p style={styles.locationText}>
-              {location.lat.toFixed(4)}, {location.lon.toFixed(4)}
+        {/* Account Section */}
+        <Card>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Account</h3>
+          <div className="space-y-3">
+            <p className="text-gray-700 text-sm">
+              <span className="font-medium">Status:</span>{' '}
+              <Badge variant={isOffline ? 'warning' : 'success'}>
+                {isOffline ? 'Offline' : 'Online'}
+              </Badge>
             </p>
-          ) : (
-            <p style={styles.locationText}>Location not available</p>
-          )}
-          <button onClick={handleUpdateLocation} style={styles.locationBtn}>
-            Update Location
-          </button>
-        </div>
-
-        {/* Logout */}
-        <button onClick={handleLogout} style={styles.logoutBtn}>
-          Logout
-        </button>
+            {volunteer.lastSyncAt && (
+              <p className="text-gray-600 text-sm">
+                Last synced: {new Date(volunteer.lastSyncAt).toLocaleString()}
+              </p>
+            )}
+            <Button
+              onClick={handleLogout}
+              variant="danger"
+              fullWidth
+            >
+              Logout
+            </Button>
+          </div>
+        </Card>
       </div>
-
-      {/* Bottom Nav */}
-      <nav style={styles.nav}>
-        <button style={styles.navItem} onClick={() => navigate('/tasks')}>
-          Tasks
-        </button>
-        <button style={{ ...styles.navItem, color: '#1e40af' }}>
-          Profile
-        </button>
-      </nav>
-    </div>
+    </Layout>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: '100vh',
-    background: '#f1f5f9',
-    paddingBottom: '4rem',
-  },
-  header: {
-    background: '#1e40af',
-    color: 'white',
-    padding: '1rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    margin: 0,
-    fontSize: '1.5rem',
-  },
-  content: {
-    padding: '1rem',
-  },
-  card: {
-    background: 'white',
-    borderRadius: '1rem',
-    padding: '2rem',
-    textAlign: 'center',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  avatar: {
-    width: '80px',
-    height: '80px',
-    borderRadius: '50%',
-    background: '#1e40af',
-    color: 'white',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '2rem',
-    fontWeight: 700,
-    margin: '0 auto 1rem',
-  },
-  name: {
-    margin: 0,
-    fontSize: '1.5rem',
-    color: '#1f2937',
-  },
-  phone: {
-    margin: '0.25rem 0 0',
-    color: '#64748b',
-  },
-  section: {
-    background: 'white',
-    borderRadius: '0.75rem',
-    padding: '1rem',
-    marginTop: '1rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  sectionTitle: {
-    margin: '0 0 0.75rem',
-    fontSize: '1rem',
-    color: '#374151',
-  },
-  skills: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '0.5rem',
-  },
-  skillBadge: {
-    padding: '0.375rem 0.75rem',
-    background: '#e0e7ff',
-    color: '#3730a3',
-    borderRadius: '9999px',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-  },
-  locationText: {
-    margin: '0 0 0.75rem',
-    color: '#6b7280',
-    fontSize: '0.875rem',
-  },
-  locationBtn: {
-    padding: '0.5rem 1rem',
-    background: '#f1f5f9',
-    border: '1px solid #e5e7eb',
-    borderRadius: '0.375rem',
-    color: '#374151',
-    fontWeight: 500,
-    cursor: 'pointer',
-  },
-  logoutBtn: {
-    width: '100%',
-    marginTop: '1.5rem',
-    padding: '1rem',
-    background: '#fee2e2',
-    border: 'none',
-    borderRadius: '0.75rem',
-    color: '#dc2626',
-    fontSize: '1rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
-  nav: {
-    position: 'fixed',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    background: 'white',
-    display: 'flex',
-    borderTop: '1px solid #e5e7eb',
-  },
-  navItem: {
-    flex: 1,
-    padding: '1rem',
-    border: 'none',
-    background: 'transparent',
-    color: '#64748b',
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
-};
