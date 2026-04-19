@@ -1,0 +1,248 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USERS & AUTHENTICATION
+// ============================================
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole
+  name         String
+  organization String?
+  region       String? // For region-scoped coordinators
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  createdTasks Task[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+enum UserRole {
+  VOLUNTEER
+  NGO_COORDINATOR
+  DISASTER_ADMIN
+  SUPER_ADMIN
+}
+
+// ============================================
+// VOLUNTEERS
+// ============================================
+
+model Volunteer {
+  id                   String    @id @default(uuid())
+  phoneEncrypted       String    @unique @map("phone_encrypted") // AES-256 encrypted
+  phoneHash            String    @unique @map("phone_hash") // SHA-256 for lookups
+  name                 String
+  language             String    @default("en") // en, hi, te, as
+  skills               Json      @default("[]") // ["medical", "logistics"]
+  availabilityRadiusKm Int       @default(10) @map("availability_radius_km")
+  currentLat           Decimal?  @map("current_lat") @db.Decimal(10, 8)
+  currentLng           Decimal?  @map("current_lng") @db.Decimal(11, 8)
+  isActive             Boolean   @default(true) @map("is_active")
+  isAvailable          Boolean   @default(true) @map("is_available") // Currently available for tasks
+  burnoutScore         Decimal   @default(0.0) @map("burnout_score") @db.Decimal(5, 2)
+  totalTasksCompleted  Int       @default(0) @map("total_tasks_completed")
+  lastCheckin          DateTime? @map("last_checkin")
+  lastActiveAt         DateTime? @map("last_active_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  assignedTasks    Task[]
+  taskLogs         TaskLog[]
+  wellnessCheckins WellnessCheckin[]
+  ivrLogs          IVRLog[]
+
+  @@index([phoneHash])
+  @@index([isActive])
+  @@index([isAvailable])
+  @@map("volunteers")
+}
+
+// ============================================
+// DISASTERS
+// ============================================
+
+model Disaster {
+  id        String         @id @default(uuid())
+  name      String // "Hyderabad Floods 2026"
+  type      DisasterType
+  location  String
+  latitude  Decimal?       @db.Decimal(10, 8)
+  longitude Decimal?       @db.Decimal(11, 8)
+  status    DisasterStatus @default(ACTIVE)
+  startDate DateTime       @map("start_date")
+  endDate   DateTime?      @map("end_date")
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  // Relations
+  tasks Task[]
+
+  @@index([status])
+  @@index([startDate(sort: Desc)])
+  @@map("disasters")
+}
+
+enum DisasterType {
+  FLOOD
+  CYCLONE
+  EARTHQUAKE
+  LANDSLIDE
+  FIRE
+  OTHER
+}
+
+enum DisasterStatus {
+  PLANNING
+  ACTIVE
+  RESOLVED
+  ARCHIVED
+}
+
+// ============================================
+// TASKS
+// ============================================
+
+model Task {
+  id                  String      @id @default(uuid())
+  disasterId          String      @map("disaster_id")
+  title               String
+  description         String?
+  requiredSkills      Json        @default("[]") @map("required_skills")
+  urgency             TaskUrgency
+  latitude            Decimal     @db.Decimal(10, 8)
+  longitude           Decimal     @db.Decimal(11, 8)
+  assignedVolunteerId String?     @map("assigned_volunteer_id")
+  status              TaskStatus  @default(OPEN)
+  maxVolunteers       Int         @default(1) @map("max_volunteers")
+  currentVolunteers   Int         @default(0) @map("current_volunteers")
+  estimatedHours      Int?        @map("estimated_hours")
+  createdBy           String      @map("created_by")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  assignedAt          DateTime?   @map("assigned_at")
+  completedAt         DateTime?   @map("completed_at")
+
+  // Relations
+  disaster          Disaster   @relation(fields: [disasterId], references: [id], onDelete: Cascade)
+  assignedVolunteer Volunteer? @relation(fields: [assignedVolunteerId], references: [id], onDelete: SetNull)
+  creator           User       @relation(fields: [createdBy], references: [id])
+  taskLogs          TaskLog[]
+
+  @@index([disasterId, status])
+  @@index([urgency])
+  @@index([assignedVolunteerId])
+  @@map("tasks")
+}
+
+enum TaskUrgency {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TaskStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ============================================
+// TASK LOGS (Activity Tracking)
+// ============================================
+
+model TaskLog {
+  id            String     @id @default(uuid())
+  taskId        String     @map("task_id")
+  volunteerId   String     @map("volunteer_id")
+  action        String?    // Action description (e.g., "assigned", "completed")
+  hoursLogged   Decimal    @default(0) @map("hours_logged") @db.Decimal(4, 2)
+  proofMediaUrl String?    @map("proof_media_url")
+  gpsLat        Decimal?   @map("gps_lat") @db.Decimal(10, 8)
+  gpsLng        Decimal?   @map("gps_lng") @db.Decimal(11, 8)
+  notes         String?
+  syncStatus    SyncStatus @default(SYNCED) @map("sync_status")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  syncedAt      DateTime?  @map("synced_at")
+
+  // Relations
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  volunteer Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@index([volunteerId, createdAt(sort: Desc)])
+  @@index([taskId])
+  @@index([syncStatus])
+  @@map("task_logs")
+}
+
+enum SyncStatus {
+  PENDING
+  SYNCED
+  CONFLICT
+}
+
+// ============================================
+// WELLNESS CHECK-INS
+// ============================================
+
+model WellnessCheckin {
+  id             String   @id @default(uuid())
+  volunteerId    String   @map("volunteer_id")
+  checkinDate    DateTime @map("checkin_date") @db.Date
+  feeling        String // good, tired, exhausted, stressed
+  sentimentScore Decimal? @map("sentiment_score") @db.Decimal(3, 2) // -1.0 to 1.0
+  voiceNoteUrl   String?  @map("voice_note_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  volunteer Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@index([volunteerId, checkinDate(sort: Desc)])
+  @@map("wellness_checkins")
+}
+
+// ============================================
+// IVR LOGS
+// ============================================
+
+model IVRLog {
+  id          String       @id @default(uuid())
+  volunteerId String       @map("volunteer_id")
+  callSid     String       @map("call_sid")
+  direction   CallDirection @default(INBOUND)
+  actionType  String       @map("action_type") // get_tasks, log_hours, wellness_checkin
+  inputValue  String?      @map("input_value")
+  language    String
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  // Relations
+  volunteer Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@index([volunteerId, createdAt(sort: Desc)])
+  @@index([callSid])
+  @@map("ivr_logs")
+}
+
+enum CallDirection {
+  INBOUND
+  OUTBOUND
+}
