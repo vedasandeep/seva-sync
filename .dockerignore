@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist
+build
+.next
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage
+.nyc_output
+jest-junit.xml
+
+# OS
+Thumbs.db
+.DS_Store
+*.log
+
+# CI/CD
+.github
+
+# Documentation
+README.md
+docs
+Idea.md
+Compaction.md
+
+# Other project files
+SETUP_COMPLETE.txt
+TDD_FILES_CREATED.txt

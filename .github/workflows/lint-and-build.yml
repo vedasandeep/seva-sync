@@ -1,0 +1,105 @@
+name: Lint and Build
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-build:
+    name: Lint and Build All Projects
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      # Backend steps
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Lint backend
+        working-directory: ./backend
+        run: npm run lint
+
+      - name: Typecheck backend
+        working-directory: ./backend
+        run: npx tsc --noEmit
+
+      - name: Build backend
+        working-directory: ./backend
+        run: npm run build
+
+      # Dashboard steps
+      - name: Install dashboard dependencies
+        working-directory: ./frontend-dashboard
+        run: npm ci
+
+      - name: Typecheck dashboard
+        working-directory: ./frontend-dashboard
+        run: npx tsc --noEmit
+
+      - name: Build dashboard
+        working-directory: ./frontend-dashboard
+        run: npm run build
+
+      # PWA steps
+      - name: Install PWA dependencies
+        working-directory: ./frontend-pwa
+        run: npm ci
+
+      - name: Typecheck PWA
+        working-directory: ./frontend-pwa
+        run: npx tsc --noEmit
+
+      - name: Build PWA
+        working-directory: ./frontend-pwa
+        run: npm run build
+
+      # Docker build verification
+      - name: Verify Docker builds
+        run: |
+          echo "Building backend Docker image..."
+          docker build -f Dockerfile.backend -t sevasync:backend .
+          echo "✓ Backend Docker image built successfully"
+          
+          echo "Building dashboard Docker image..."
+          docker build -f Dockerfile.dashboard -t sevasync:dashboard .
+          echo "✓ Dashboard Docker image built successfully"
+          
+          echo "Building PWA Docker image..."
+          docker build -f Dockerfile.pwa -t sevasync:pwa .
+          echo "✓ PWA Docker image built successfully"
+
+      - name: Build summary
+        run: |
+          echo "## Build Summary ✓"
+          echo ""
+          echo "### Backend"
+          echo "- Linting: ✓"
+          echo "- TypeScript: ✓"
+          echo "- Build: ✓"
+          echo ""
+          echo "### Dashboard"
+          echo "- TypeScript: ✓"
+          echo "- Build: ✓"
+          echo ""
+          echo "### PWA"
+          echo "- TypeScript: ✓"
+          echo "- Build: ✓"
+          echo ""
+          echo "### Docker"
+          echo "- Backend Image: ✓"
+          echo "- Dashboard Image: ✓"
+          echo "- PWA Image: ✓"
