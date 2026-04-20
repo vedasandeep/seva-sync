@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DisasterType, DisasterStatus } from '@prisma/client';
+import { DisasterType, DisasterStatus, DisasterSeverity } from '@prisma/client';
 
 /**
  * Schema for creating a new disaster
@@ -8,6 +8,7 @@ import { DisasterType, DisasterStatus } from '@prisma/client';
 export const createDisasterSchema = z.object({
   name: z.string().min(3, 'Disaster name must be at least 3 characters').max(200),
   type: z.nativeEnum(DisasterType),
+  severity: z.nativeEnum(DisasterSeverity).default('MEDIUM'),
   location: z.string().min(3, 'Location must be at least 3 characters').max(500),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
@@ -22,6 +23,7 @@ export const updateDisasterSchema = z.object({
   location: z.string().min(3).max(500).optional(),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
+  severity: z.nativeEnum(DisasterSeverity).optional(),
   status: z.nativeEnum(DisasterStatus).optional(),
   endDate: z.string().datetime().transform(str => new Date(str)).optional(),
 });
@@ -31,6 +33,7 @@ export const updateDisasterSchema = z.object({
  */
 export const listDisastersSchema = z.object({
   status: z.nativeEnum(DisasterStatus).optional(),
+  severity: z.nativeEnum(DisasterSeverity).optional(),
   type: z.nativeEnum(DisasterType).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
