@@ -30,6 +30,13 @@ export default function VolunteerSuggestionsModal({
     return 'Poor Match';
   };
 
+  const getBurnoutColor = (burnoutScore: number) => {
+    if (burnoutScore <= 25) return { bg: '#dcfce7', text: '#166534', label: 'Low Risk' };
+    if (burnoutScore <= 50) return { bg: '#fef3c7', text: '#92400e', label: 'Moderate Risk' };
+    if (burnoutScore <= 75) return { bg: '#fed7aa', text: '#9a3412', label: 'High Risk' };
+    return { bg: '#fee2e2', text: '#991b1b', label: 'Critical Risk' };
+  };
+
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -110,44 +117,65 @@ export default function VolunteerSuggestionsModal({
                       </div>
                     </div>
 
-                    {/* Score breakdown */}
-                    <div style={styles.scoreSection}>
-                      <div style={styles.scoreBreakdownRow}>
-                        <div style={styles.scoreItem}>
-                          <span style={styles.scoreItemLabel}>Skill Match</span>
-                          <span style={styles.scoreItemValue}>
-                            {suggestion.scoreBreakdown.skillMatch}%
-                          </span>
-                        </div>
-                        <div style={styles.scoreItem}>
-                          <span style={styles.scoreItemLabel}>Distance</span>
-                          <span style={styles.scoreItemValue}>
-                            {suggestion.scoreBreakdown.distanceScore}%
-                          </span>
-                        </div>
-                        <div style={styles.scoreItem}>
-                          <span style={styles.scoreItemLabel}>Availability</span>
-                          <span style={styles.scoreItemValue}>
-                            {suggestion.scoreBreakdown.availabilityScore}%
-                          </span>
-                        </div>
-                      </div>
+                     {/* Burnout warning - BURNOUT-FIRST VISUAL PRIORITY */}
+                     {suggestion.volunteer.burnoutScore >= 50 && (
+                       <div
+                         style={{
+                           ...styles.burnoutWarning,
+                           backgroundColor: getBurnoutColor(suggestion.volunteer.burnoutScore).bg,
+                           color: getBurnoutColor(suggestion.volunteer.burnoutScore).text,
+                         }}
+                       >
+                         <AlertCircle size={14} />
+                         <span>
+                           {getBurnoutColor(suggestion.volunteer.burnoutScore).label}
+                         </span>
+                       </div>
+                     )}
 
-                      <div style={styles.scoreBreakdownRow}>
-                        <div style={styles.scoreItem}>
-                          <span style={styles.scoreItemLabel}>Burnout Risk</span>
-                          <span style={styles.scoreItemValue}>
-                            {suggestion.scoreBreakdown.burnoutScore}%
-                          </span>
-                        </div>
-                        <div style={styles.scoreItem}>
-                          <span style={styles.scoreItemLabel}>Workload</span>
-                          <span style={styles.scoreItemValue}>
-                            {suggestion.scoreBreakdown.workloadScore}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                     {/* Score breakdown - with progressive disclosure */}
+                     <details style={styles.scoreDetails}>
+                       <summary style={styles.scoreDetailsSummary}>
+                         Matching Score Details
+                       </summary>
+                       <div style={styles.scoreSection}>
+                         <div style={styles.scoreBreakdownRow}>
+                           <div style={styles.scoreItem}>
+                             <span style={styles.scoreItemLabel}>Skill Match</span>
+                             <span style={styles.scoreItemValue}>
+                               {suggestion.scoreBreakdown.skillMatch}%
+                             </span>
+                           </div>
+                           <div style={styles.scoreItem}>
+                             <span style={styles.scoreItemLabel}>Distance</span>
+                             <span style={styles.scoreItemValue}>
+                               {suggestion.scoreBreakdown.distanceScore}%
+                             </span>
+                           </div>
+                           <div style={styles.scoreItem}>
+                             <span style={styles.scoreItemLabel}>Availability</span>
+                             <span style={styles.scoreItemValue}>
+                               {suggestion.scoreBreakdown.availabilityScore}%
+                             </span>
+                           </div>
+                         </div>
+
+                         <div style={styles.scoreBreakdownRow}>
+                           <div style={styles.scoreItem}>
+                             <span style={styles.scoreItemLabel}>Burnout Risk</span>
+                             <span style={styles.scoreItemValue}>
+                               {suggestion.scoreBreakdown.burnoutScore}%
+                             </span>
+                           </div>
+                           <div style={styles.scoreItem}>
+                             <span style={styles.scoreItemLabel}>Workload</span>
+                             <span style={styles.scoreItemValue}>
+                               {suggestion.scoreBreakdown.workloadScore}%
+                             </span>
+                           </div>
+                         </div>
+                       </div>
+                     </details>
 
                     {/* Volunteer details */}
                     <div style={styles.volunteerDetails}>
@@ -216,8 +244,7 @@ export default function VolunteerSuggestionsModal({
         {/* Footer */}
         <div style={styles.footer}>
           <p style={styles.footerText}>
-            Volunteers are ranked by skill match (50%), distance (20%), availability (15%),
-            burnout risk (10%), and workload (5%)
+            🔴 Burnout Risk prioritized first. Then: skill match (40%), distance (30%), availability (20%), workload (10%)
           </p>
           <button onClick={onClose} style={styles.cancelBtn}>
             Cancel
@@ -388,6 +415,30 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '0.25rem',
     fontSize: '0.7rem',
     fontWeight: 500,
+  },
+  burnoutWarning: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.5rem',
+    borderRadius: '0.25rem',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+  },
+  scoreDetails: {
+    cursor: 'pointer',
+  },
+  scoreDetailsSummary: {
+    padding: '0.5rem',
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '0.25rem',
+    cursor: 'pointer',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    color: '#475569',
+    listStyle: 'none',
+    userSelect: 'none',
   },
   scoreSection: {
     display: 'flex',
