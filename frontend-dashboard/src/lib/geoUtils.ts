@@ -200,7 +200,7 @@ export function scoreToStars(score: number): number {
 }
 
 /**
- * Get star display string (e.g., "★★★★☆")
+ * Get star display info (e.g., "★★★★☆")
  */
 export function getStarDisplay(score: number): string {
   const stars = scoreToStars(score);
@@ -214,6 +214,22 @@ export function getStarDisplay(score: number): string {
   for (let i = 0; i < emptyStars; i++) display += '☆';
 
   return display;
+}
+
+/**
+ * Get detailed star breakdown for score
+ */
+export function getStarBreakdown(score: number): { full: number; half: boolean; empty: number } {
+  const stars = scoreToStars(score);
+  const fullStars = Math.floor(stars);
+  const hasHalf = stars % 1 !== 0;
+  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+
+  return {
+    full: fullStars,
+    half: hasHalf,
+    empty: emptyStars,
+  };
 }
 
 /**
