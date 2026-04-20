@@ -225,7 +225,62 @@ export class TaskController {
       res.json({ stats });
     } catch (error) {
       if (error instanceof Error) {
-        res.status(400).json({ error: 'Bad Request', message: error.message });
+        res.status(404).json({ error: 'Not Found', message: error.message });
+      } else {
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    }
+  }
+
+  /**
+   * GET /api/tasks/:id/activity
+   * Get task activity/timeline
+   */
+  async getTaskActivity(req: Request, res: Response): Promise<void> {
+    try {
+      const activity = await taskService.getTaskActivity(req.params.id);
+      res.json({ activity, count: activity.length });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(404).json({ error: 'Not Found', message: error.message });
+      } else {
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    }
+  }
+
+  /**
+   * GET /api/tasks/:id/suggestions
+   * Get volunteer suggestions for task assignment
+   */
+  async getVolunteerSuggestions(req: Request, res: Response): Promise<void> {
+    try {
+      const suggestions = await taskService.getVolunteerSuggestions(req.params.id);
+      res.json({ suggestions, count: suggestions.length });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(404).json({ error: 'Not Found', message: error.message });
+      } else {
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    }
+  }
+
+  /**
+   * POST /api/tasks/bulk-update
+   * Bulk update multiple tasks
+   */
+  async bulkUpdateTasks(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await taskService.bulkUpdateTasks(req.body);
+      res.json({
+        message: 'Tasks updated successfully',
+        updated: result.count,
+        tasks: result.tasks,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: 'Bulk Update Failed', message: error.message });
       } else {
         res.status(500).json({ error: 'Internal Server Error' });
       }

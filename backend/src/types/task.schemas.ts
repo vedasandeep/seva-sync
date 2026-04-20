@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TaskStatus, TaskUrgency } from '@prisma/client';
+import { TaskStatus, TaskUrgency, TaskType } from '@prisma/client';
 
 export const createTaskSchema = z.object({
   disasterId: z.string().uuid('Invalid disaster ID'),
@@ -51,4 +51,13 @@ export const nearbyTasksSchema = z.object({
   radius: z.string().transform((val) => parseInt(val, 10)).optional(),
   status: z.nativeEnum(TaskStatus).optional(),
   urgency: z.nativeEnum(TaskUrgency).optional(),
+});
+
+export const bulkUpdateTaskSchema = z.object({
+  taskIds: z.array(z.string().uuid()).min(1).max(100),
+  status: z.nativeEnum(TaskStatus).optional(),
+  urgency: z.nativeEnum(TaskUrgency).optional(),
+  type: z.nativeEnum(TaskType).optional(),
+  assignedVolunteerId: z.string().uuid().optional(),
+  archived: z.boolean().optional(),
 });

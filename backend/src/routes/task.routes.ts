@@ -11,19 +11,13 @@ import {
   completeTaskSchema,
   taskFiltersSchema,
   nearbyTasksSchema,
+  bulkUpdateTaskSchema,
 } from '../types/task.schemas';
 import { uuidParamSchema } from '../types/volunteer.schemas';
 
 const router = Router();
 
-// List tasks (volunteers can see all tasks)
-router.get(
-  '/',
-  authenticate,
-  validateQuery(taskFiltersSchema),
-  (req, res) => taskController.listTasks(req, res)
-);
-
+// Specific routes BEFORE generic :id routes
 // Find nearby tasks
 router.get(
   '/nearby',
@@ -40,12 +34,38 @@ router.get(
   (req, res) => taskController.getDisasterTaskStats(req, res)
 );
 
-// Get task by ID
+// List tasks (volunteers can see all tasks)
+router.get(
+  '/',
+  authenticate,
+  validateQuery(taskFiltersSchema),
+  (req, res) => taskController.listTasks(req, res)
+);
+
+// Generic :id routes
+// Get task by ID (enhanced with type and logs)
 router.get(
   '/:id',
   authenticate,
   validateParams(uuidParamSchema),
   (req, res) => taskController.getTaskById(req, res)
+);
+
+// Get task activity/timeline
+router.get(
+  '/:id/activity',
+  authenticate,
+  validateParams(uuidParamSchema),
+  (req, res) => taskController.getTaskActivity(req, res)
+);
+
+// Get volunteer suggestions for a task
+router.get(
+  '/:id/suggestions',
+  authenticate,
+  requireCoordinator,
+  validateParams(uuidParamSchema),
+  (req, res) => taskController.getVolunteerSuggestions(req, res)
 );
 
 // Create task (coordinator only)
@@ -55,6 +75,15 @@ router.post(
   requireCoordinator,
   validateBody(createTaskSchema),
   (req, res) => taskController.createTask(req, res)
+);
+
+// Bulk update tasks (coordinator only)
+router.post(
+  '/bulk-update',
+  authenticate,
+  requireCoordinator,
+  validateBody(bulkUpdateTaskSchema),
+  (req, res) => taskController.bulkUpdateTasks(req, res)
 );
 
 // Update task (coordinator only)
