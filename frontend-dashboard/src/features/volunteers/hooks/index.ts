@@ -43,6 +43,23 @@ const volunteersApi = {
     );
     return response.json();
   },
+
+  getLocations: async (disasterId?: string, radiusKm?: number) => {
+    let url = '/api/volunteers/nearby';
+    const params = new URLSearchParams();
+    if (disasterId) params.append('disasterId', disasterId);
+    if (radiusKm) params.append('radiusKm', radiusKm.toString());
+    if (params.toString()) url += `?${params.toString()}`;
+    const response = await fetch(url);
+    return response.json();
+  },
+
+  getHeatmap: async (disasterId: string, gridSizeKm: number = 1) => {
+    const response = await fetch(
+      `/api/volunteers/heatmap?disasterId=${disasterId}&gridSizeKm=${gridSizeKm}`
+    );
+    return response.json();
+  },
 };
 
 /**
@@ -148,5 +165,34 @@ export const useBurnoutAnalytics = (disasterId?: string) => {
     staleTime: 30000, // 30s
     gcTime: 600000, // 10min
     refetchInterval: 60000, // 60s
+  });
+};
+
+/**
+ * Hook to fetch volunteer locations for map display
+ * Refetch interval: 60s
+ */
+export const useVolunteerLocations = (disasterId?: string, radiusKm?: number) => {
+  return useQuery({
+    queryKey: ['volunteer-locations', disasterId, radiusKm],
+    queryFn: () => volunteersApi.getLocations(disasterId, radiusKm),
+    staleTime: 30000, // 30s
+    gcTime: 600000, // 10min
+    refetchInterval: 60000, // 60s
+  });
+};
+
+/**
+ * Hook to fetch volunteer density heatmap
+ * Refetch interval: 60s
+ */
+export const useVolunteerHeatmap = (disasterId: string, gridSizeKm: number = 1) => {
+  return useQuery({
+    queryKey: ['volunteer-heatmap', disasterId, gridSizeKm],
+    queryFn: () => volunteersApi.getHeatmap(disasterId, gridSizeKm),
+    staleTime: 30000, // 30s
+    gcTime: 600000, // 10min
+    refetchInterval: 60000, // 60s
+    enabled: !!disasterId,
   });
 };
