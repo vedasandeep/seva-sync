@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { disasters } from '../lib/api';
 import { DisasterFilterBar, DisasterCard, DisasterCardData } from '../components/disasters';
 
@@ -121,6 +122,7 @@ const MOCK_DISASTERS: DisasterCardData[] = [
 ];
 
 export default function DisastersPage() {
+  const navigate = useNavigate();
   const [disasterList, setDisasterList] = useState<DisasterCardData[]>([]);
   const [filteredList, setFilteredList] = useState<DisasterCardData[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -425,7 +427,7 @@ export default function DisastersPage() {
                 <DisasterCard
                   key={disaster.id}
                   disaster={disaster}
-                  onView={() => console.log('View', disaster.id)}
+                  onView={(id) => navigate(`/disasters/${id}`)}
                   onActivate={handleActivate}
                   onResolve={handleResolve}
                   onArchive={handleArchive}

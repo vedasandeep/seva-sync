@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import DisastersPage from './pages/DisastersPage';
+import DisasterDetailPage from './pages/DisasterDetailPage';
 import TasksPage from './pages/TasksPage';
 import VolunteersPage from './pages/VolunteersPage';
 
@@ -26,6 +27,7 @@ function AppRoutes() {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/disasters" element={<DisastersPage />} />
+        <Route path="/disasters/:id" element={<DisasterDetailPage />} />
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/volunteers" element={<VolunteersPage />} />
       </Route>
