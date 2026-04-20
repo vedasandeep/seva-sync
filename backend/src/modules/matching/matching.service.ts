@@ -1,6 +1,7 @@
 import { prisma } from '../../infrastructure/database';
 import { TaskStatus, TaskUrgency } from '@prisma/client';
 import type { Decimal } from '@prisma/client/runtime/library';
+import { calculateDistance, distanceToScore } from '../../shared/utils/geospatial';
 
 /**
  * AI Matching Service
@@ -77,43 +78,6 @@ export function calculateSkillSimilarity(volunteerSkills: string[], requiredSkil
 
   const union = new Set([...volunteerSet, ...requiredSet]).size;
   return intersection / union;
-}
-
-/**
- * Calculate distance between two points using Haversine formula
- * Returns distance in kilometers
- */
-export function calculateDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const R = 6371; // Earth's radius in km
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-  
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-function toRadians(degrees: number): number {
-  return degrees * (Math.PI / 180);
-}
-
-/**
- * Convert distance to a 0-100 score
- * 0km = 100, 50km+ = 0 (linear decay)
- */
-function distanceToScore(distanceKm: number, maxDistanceKm: number = 50): number {
-  if (distanceKm <= 0) return 100;
-  if (distanceKm >= maxDistanceKm) return 0;
-  return 100 * (1 - distanceKm / maxDistanceKm);
 }
 
 /**

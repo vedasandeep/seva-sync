@@ -1,0 +1,280 @@
+DAY 5 MAP IMPLEMENTATION - QUICK START GUIDE
+=============================================
+
+FILES TO READ FIRST (5 minutes):
+1. frontend-dashboard/src/lib/mockData.ts - See coordinate data structure
+2. frontend-dashboard/src/pages/DisastersPage.tsx - Understand current data flow
+3. frontend-pwa/src/features/tasks/hooks/useTasks.ts - Understand PWA hooks
+4. FRONTEND_MAP_ANALYSIS.txt - Full analysis (already created)
+
+================================================================================
+QUICK REFERENCE: COORDINATE DATA READY TO USE
+================================================================================
+
+DASHBOARD - IMPORT AND USE:
+File: frontend-dashboard/src/lib/mockData.ts
+
+Example 1 - All Tasks:
+import { MOCK_TASKS, MOCK_TASKS_EXTENDED } from '../lib/mockData';
+
+MOCK_TASKS[0] = {
+  id: 'task-1',
+  location: 'Hyderabad, Telangana',
+  latitude: 17.385,
+  longitude: 78.487,
+  urgency: 'CRITICAL',
+  status: 'IN_PROGRESS',
+  type: 'RESCUE',
+  assignedVolunteer: { ... },
+  ...
+}
+
+Example 2 - All Volunteer Suggestions:
+import { MOCK_VOLUNTEER_SUGGESTIONS } from '../lib/mockData';
+
+MOCK_VOLUNTEER_SUGGESTIONS[0] = {
+  volunteer: {
+    name: 'Raj Kumar',
+    currentLocation: { lat: 17.38, lng: 78.48 },
+    skills: ['Search & Rescue', 'First Aid'],
+    ...
+  },
+  scoreBreakdown: {
+    distanceScore: 95,
+    ...
+  }
+}
+
+Example 3 - Disasters (from DisastersPage):
+Manually defined in component:
+{
+  name: 'Hyderabad Floods 2026',
+  location: 'Hyderabad, Telangana',
+  latitude: 17.385,
+  longitude: 78.487,
+}
+
+================================================================================
+PWA - DATA FETCHING PATTERN
+================================================================================
+
+In TasksPage.tsx or new MapView component:
+
+import { useTasks } from '../features/tasks/hooks';
+import { useOffline } from '../hooks';
+
+export function MyMapComponent() {
+  const { tasks, loadFromDB, refresh } = useTasks();
+  const { isOffline } = useOffline();
+
+  // tasks is an array like:
+  // [{
+  //   id: 'task-1',
+  //   title: 'Task Name',
+  //   latitude: 17.385,
+  //   longitude: 78.487,
+  //   urgency: 'HIGH',
+  //   status: 'OPEN',
+  // }, ...]
+
+  useEffect(() => {
+    loadFromDB(); // Load from cache first
+    if (!isOffline) {
+      refresh(); // Fetch fresh from API
+    }
+  }, [isOffline]);
+
+  // Get user location:
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      });
+    }
+  }, []);
+
+  return (
+    // Render map with tasks array
+    // Render user marker with location
+  );
+}
+
+================================================================================
+LEAFLET + REACT-LEAFLET BASIC SETUP
+================================================================================
+
+Already installed in Dashboard ✓
+Need to install in PWA: npm install leaflet react-leaflet @types/leaflet
+
+BASIC COMPONENT TEMPLATE:
+
+import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import { LatLngExpression } from 'leaflet';
+import L from 'leaflet';
+
+interface MapProps {
+  disasters?: Array<{ id: string; location: string; latitude: number; longitude: number }>;
+  tasks?: Array<{ id: string; latitude: number; longitude: number; urgency: string }>;
+  volunteer?: { lat: number; lng: number };
+}
+
+export function DisasterMap({ disasters = [], tasks = [] }: MapProps) {
+  const center: LatLngExpression = [17.385, 78.487]; // Hyderabad default
+
+  return (
+    <MapContainer
+      center={center}
+      zoom={7}
+      style={{ height: '100%', width: '100%' }}
+      className="rounded-lg"
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; OpenStreetMap contributors'
+      />
+
+      {/* Disaster Markers */}
+      {disasters.map((disaster) => (
+        <Marker 
+          key={disaster.id}
+          position={[disaster.latitude, disaster.longitude]}
+          icon={createDisasterIcon(disaster.severity)} {/* Custom icon */}
+        >
+          <Popup>{disaster.name}</Popup>
+        </Marker>
+      ))}
+
+      {/* Task Markers */}
+      {tasks.map((task) => (
+        <Marker
+          key={task.id}
+          position={[task.latitude, task.longitude]}
+          icon={createTaskIcon(task.urgency)} {/* Custom icon */}
+        >
+          <Popup>{task.title}</Popup>
+        </Marker>
+      ))}
+
+      {/* Volunteer Location (blue marker) */}
+      {volunteer && (
+        <Circle
+          center={[volunteer.lat, volunteer.lng]}
+          radius={1000} {/* 1km radius */}
+          color="blue"
+          fillColor="lightblue"
+          fillOpacity={0.5}
+        />
+      )}
+    </MapContainer>
+  );
+}
+
+// Helper function for custom icons:
+function createDisasterIcon(severity?: string) {
+  const colors: Record<string, string> = {
+    CRITICAL: 'red',
+    HIGH: 'orange',
+    MEDIUM: 'yellow',
+    LOW: 'blue',
+  };
+  
+  return L.divIcon({
+    className: 'custom-icon',
+    html: `<div style="background: ${colors[severity || 'MEDIUM']}; width: 30px; height: 30px; border-radius: 50%; border: 2px solid white;"></div>`,
+  });
+}
+
+================================================================================
+COORDINATE NAMING - CURRENT INCONSISTENCY
+================================================================================
+
+TASKS/DISASTERS USE:
+latitude
+longitude
+
+VOLUNTEERS USE:
+currentLocation: { lat, lng }
+
+RECOMMENDATION FOR DAY 5:
+Create a unified interface in a utils file:
+
+// src/types/geo.ts or src/utils/geo.ts
+export interface GeoPoint {
+  latitude: number;
+  longitude: number;
+}
+
+export interface GeoCoordinates {
+  lat: number;
+  lng: number;
+}
+
+// Helper functions:
+export function geoPointToCoords(point: GeoPoint): GeoCoordinates {
+  return { lat: point.latitude, lng: point.longitude };
+}
+
+export function coordsToGeoPoint(coords: GeoCoordinates): GeoPoint {
+  return { latitude: coords.lat, longitude: coords.lng };
+}
+
+Then use these consistently across new map components.
+
+================================================================================
+COMPONENT STRUCTURE RECOMMENDATION
+================================================================================
+
+FRONTEND-DASHBOARD:
+
+src/components/maps/
+├── DisasterMap.tsx                    (Main map, zoom level 7)
+├── TaskMap.tsx                        (Task-only map, zoom level 8-10)
+├── VolunteerMap.tsx                   (Volunteer suggestions map)
+├── DisasterDetailMap.tsx              (Single disaster + tasks, zoom 10)
+└── utils/
+    └── mapIcons.ts                    (Icon creation functions)
+
+FRONTEND-PWA:
+
+src/features/map/
+├── MapView.tsx                        (Main map for TasksPage)
+├── NearbyTasksMap.tsx                 (Just nearby tasks)
+├── UserLocationMap.tsx                (Just user position)
+└── hooks/
+    └── useMapData.ts                  (Custom hook for map data)
+
+================================================================================
+COLOR SYSTEM - USE THESE DIRECTLY
+================================================================================
+
+From existing codebase (frontend-dashboard/src/components/tasks/TaskCard.tsx):
+
+const urgencyColors: Record<string, { bg: string; text: string }> = {
+  LOW: { bg: '#dcfce7', text: '#166534' },
+  MEDIUM: { bg: '#fef3c7', text: '#92400e' },
+  HIGH: { bg: '#fed7aa', text: '#9a3412' },
+  CRITICAL: { bg: '#fee2e2', text: '#991b1b' },
+};
+
+For map markers, use:
+- Red (#fee2e2 or #991b1b): CRITICAL
+- Orange (#fed7aa or #9a3412): HIGH
+- Yellow (#fef3c7 or #92400e): MEDIUM
+- Green (#dcfce7 or #166534): LOW
+
+For status:
+- OPEN: Gray
+- ASSIGNED: Light Blue
+- IN_PROGRESS: Yellow
+- COMPLETED: Green
+- CANCELLED: Red with strikethrough
+
+================================================================================
+FIRST 30 MINUTES - DO THIS
+================================================================================
+

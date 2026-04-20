@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as disasterController from './disaster.controller';
+import heatmapRouter from './heatmap.controller';
 import { authenticate } from '../../shared/middleware/auth';
 import { requireAdmin, requireCoordinator } from '../../shared/middleware/rbac';
 import { validateBody, validateQuery, validateParams } from '../../shared/middleware/validation';
@@ -13,6 +14,12 @@ import {
 } from '../../shared/types/disaster.schemas';
 
 const router = Router();
+
+/**
+ * Mount heatmap subrouter at /disasters
+ * This must be before /:id routes to avoid collision
+ */
+router.use(authenticate, heatmapRouter);
 
 /**
  * @route   POST /api/disasters

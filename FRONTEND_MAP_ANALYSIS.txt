@@ -1,0 +1,258 @@
+FRONTEND MAP CAPABILITIES ANALYSIS - DAY 5
+==========================================
+
+QUICK SUMMARY:
+- Dashboard: FULLY READY (Leaflet installed, mock data with coordinates)
+- PWA: Infrastructure ready (needs npm install leaflet)
+- No blockers, ready to build maps immediately
+
+================================================================================
+1. MAP LIBRARIES INSTALLED
+================================================================================
+
+FRONTEND-DASHBOARD:
+✓ leaflet@1.9.4 - Open-source map library
+✓ react-leaflet@4.2.1 - React component wrapper
+✓ @types/leaflet@1.9.12 - TypeScript definitions
+STATUS: READY TO USE
+
+FRONTEND-PWA:
+✗ Map libraries NOT installed
+✓ Geolocation API ready
+✓ State management (Zustand) ready
+✓ Offline infrastructure ready
+ACTION: npm install leaflet react-leaflet @types/leaflet
+
+================================================================================
+2. EXISTING MAP COMPONENTS
+================================================================================
+
+Dashboard: 0 map components (blank canvas)
+PWA: 0 map components (blank canvas)
+Both: MapPin icons imported from lucide-react
+
+STATUS: Ready for new implementation
+
+================================================================================
+3. MOCK DATA - LOCATIONS AVAILABLE
+================================================================================
+
+DISASTERS (8 locations with coordinates):
+- Hyderabad: 17.3850, 78.4867 (CRITICAL, ACTIVE)
+- Chennai: 13.0827, 80.2707 (HIGH, ACTIVE)
+- New Delhi: 28.6139, 77.209 (CRITICAL, PLANNING)
+- Bangalore: 12.9716, 77.5946 (MEDIUM, ACTIVE)
+- Shimla: 31.7775, 77.1577
+- Ahmedabad: 23.0225, 72.5714
+- Mumbai, Kolkata: (no coordinates yet)
+
+TASKS (50+ with latitude/longitude):
+- Distributed across 4+ active disasters
+- Each task has: location, latitude, longitude, urgency (LOW/MEDIUM/HIGH/CRITICAL), type
+- Task types: RESCUE, MEDICAL, FOOD_DISTRIBUTION, SHELTER, LOGISTICS, COMMUNICATION, TRANSPORT, SUPPLY_COLLECTION, SAFETY
+- Status: OPEN, ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED
+- Example cluster: 40+ tasks in Hyderabad area (17.35-17.39 lat, 78.46-78.50 lng)
+
+VOLUNTEERS (5 with currentLocation coordinates):
+- All in Hyderabad region: (17.36-17.39, 78.46-78.50)
+- Each has: distanceScore (pre-calculated), skillMatch, availabilityScore
+- Current location format: { lat: number, lng: number }
+
+COORDINATE COUNT: 59+ references to latitude/longitude in mock data
+
+================================================================================
+4. DATA STRUCTURES FOR COORDINATES
+================================================================================
+
+TASK INTERFACE (used in dashboard):
+{
+  id: string;
+  location: string;           // e.g., "Hyderabad, Telangana"
+  latitude: number;           // e.g., 17.385
+  longitude: number;          // e.g., 78.487
+  status: string;
+  urgency: string;
+  type: string;
+  disasterId: string;
+  ... other fields
+}
+
+VOLUNTEER INTERFACE (PWA):
+{
+  currentLocation?: { lat: number; lng: number };
+  distanceScore: number;      // Already calculated
+  skillMatch: number;
+  availabilityScore: number;
+  ... other fields
+}
+
+API RESPONSE TYPES (PWA):
+interface TaskResponse {
+  tasks: Array<{
+    latitude?: number;
+    longitude?: number;
+    ... other fields
+  }>;
+}
+
+interface NearbyTaskResponse {
+  tasks: Array<{
+    distanceKm: number;       // Server-calculated distance
+    ... other fields
+  }>;
+}
+
+NOTE: Two naming conventions (lat/lng vs latitude/longitude) - recommend standardizing in Day 5
+
+================================================================================
+5. DATA FETCHING HOOKS AVAILABLE
+================================================================================
+
+DASHBOARD:
+- Simple pattern: Import MOCK_TASKS directly from mockData.ts
+- No custom hooks
+- All data statically available
+
+PWA - Rich Hook Ecosystem:
+
+useTasks() Hook:
+- tasks: Task[]                 (includes latitude, longitude)
+- refresh(): void               (fetch from API)
+- loadFromDB(): void            (load from IndexedDB)
+- updateTask(id, updates): void (update + sync)
+
+useOffline() Hook:
+- isOffline: boolean
+- pendingSyncCount: number
+- isOnline: boolean
+
+useOfflineSync() Hook:
+- syncNow(): void
+- syncing: boolean
+- pendingSyncCount: number
+
+API Functions (PWA):
+- fetchTasks()                  (returns tasks with lat/lng)
+- fetchNearbyTasks(lat, lon)   (distance-sorted tasks)
+- updateLocation(lat, lon)      (update volunteer position)
+
+Geolocation (PWA - in pages):
+navigator.geolocation.getCurrentPosition((position) => {
+  lat: position.coords.latitude,
+  lon: position.coords.longitude
+});
+
+Files with geolocation:
+- TasksPage.tsx: Gets location, calls fetchNearbyTasks()
+- ProfilePage.tsx: Gets location, calls updateLocation()
+
+================================================================================
+6. MOBILE VS DESKTOP UI STRUCTURE
+================================================================================
+
+FRONTEND-DASHBOARD (Desktop-First Design):
+├─ Layout: Sidebar + Main content
+├─ Sidebar: hidden md:flex (desktop only)
+├─ Mobile Menu: md:hidden (mobile drawer)
+├─ Responsive Grid: grid-cols-1 sm:grid-cols-2 md:grid-cols-4
+├─ Main Content: md:ml-64 (offset for sidebar)
+├─ Framework: Tailwind CSS 4.2.2
+
+Tailwind Breakpoints Used:
+- No prefix: Mobile (0px)
+- sm: (640px)
+- md: (768px) - Main breakpoint for sidebar
+- lg: (1024px)
+
+FRONTEND-PWA (Mobile-First Design):
+├─ Layout: Full-width header + Main + Footer
+├─ Header: Sticky, bg-blue-600, with offline badge
+├─ Main: max-w-7xl mx-auto w-full px-4
+├─ Offline Status: Visible badge + sync counter
+├─ Toast Notifications: Custom toast component
+├─ Framework: Tailwind CSS 3.4.1
+
+Design Features:
+- Sticky header with z-40
+- Offline indicator in header
+- Pending sync counter in header
+- User avatar display
+- Responsive spacing with px-4
+
+================================================================================
+7. READY-TO-USE COLOR & ICON SYSTEM
+================================================================================
+
+TASK TYPE EMOJIS:
+RESCUE: 🚨
+MEDICAL: 🏥
+FOOD_DISTRIBUTION: 🍽️
+SHELTER: 🏠
+LOGISTICS: 📦
+COMMUNICATION: 📞
+TRANSPORT: 🚗
+SUPPLY_COLLECTION: 📦
+SAFETY: ⚠️
+OTHER: 📋
+
+URGENCY COLORS:
+LOW: bg=#dcfce7, text=#166534
+MEDIUM: bg=#fef3c7, text=#92400e
+HIGH: bg=#fed7aa, text=#9a3412
+CRITICAL: bg=#fee2e2, text=#991b1b
+
+STATUS COLORS:
+OPEN: bg=#f0f4f8, text=#475569
+ASSIGNED: bg=#eff6ff, text=#1e40af
+IN_PROGRESS: bg=#fef3c7, text=#92400e
+COMPLETED: bg=#dcfce7, text=#166534
+CANCELLED: bg=#fee2e2, text=#7f1d1d
+
+DISASTER SEVERITY COLORS:
+LOW: blue
+MEDIUM: yellow
+HIGH: orange
+CRITICAL: red
+
+ICONS AVAILABLE (from lucide-react):
+MapPin, ArrowLeft, Calendar, Clock, Users, CheckCircle2, AlertCircle, etc.
+
+================================================================================
+8. FILE LOCATIONS & STRUCTURE
+================================================================================
+
+FRONTEND-DASHBOARD KEY FILES:
+frontend-dashboard/src/
+├── lib/
+│   └── mockData.ts (50+ tasks with lat/lng, 8 disasters, 5 volunteers)
+├── pages/
+│   ├── DisastersPage.tsx (displays 8 disasters)
+│   ├── DisasterDetailPage.tsx (single disaster detail)
+│   └── TasksPage.tsx (displays 50+ tasks)
+├── components/
+│   ├── tasks/TaskCard.tsx (has location field)
+│   ├── disasters/DisasterCard.tsx (has location field)
+│   ├── Layout.tsx (responsive container)
+│   └── maps/ (← CREATE HERE - new folder for map components)
+└── features/
+    ├── disasters/
+    ├── tasks/
+    └── volunteers/
+
+FRONTEND-PWA KEY FILES:
+frontend-pwa/src/
+├── pages/
+│   ├── TasksPage.tsx (has geolocation hook, calls fetchNearbyTasks)
+│   └── ProfilePage.tsx (has geolocation hook, calls updateLocation)
+├── features/
+│   └── tasks/
+│       ├── hooks/useTasks.ts (returns tasks with lat/lng)
+│       └── stores/tasksStore.ts (stores coordinate data)
+├── lib/
+│   ├── api.ts (fetchTasks, fetchNearbyTasks, updateLocation)
+│   └── db.ts (IndexedDB storage with coordinates)
+├── hooks/
+│   ├── useOffline.ts (offline detection)
+│   └── useOfflineSync.ts (manual sync control)
+├── stores/
+│
