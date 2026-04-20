@@ -4,3 +4,5 @@ export { default as TaskTableView } from './TaskTableView';
 export { default as TaskKanbanView } from './TaskKanbanView';
 export { default as TaskDetailDrawer } from './TaskDetailDrawer';
 export { default as TaskCreationWizard } from './TaskCreationWizard';
+export { default as VolunteerSuggestionsModal } from './VolunteerSuggestionsModal';
+export { default as BulkTaskActionsModal } from './BulkTaskActionsModal';
