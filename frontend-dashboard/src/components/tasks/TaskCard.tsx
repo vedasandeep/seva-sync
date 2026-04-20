@@ -210,22 +210,25 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '0.75rem',
     transition: 'all 0.3s',
     cursor: 'pointer',
-  },
+  } as any,
   cardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: '1rem',
-  },
+    flexWrap: 'wrap',
+  } as any,
   titleSection: {
     display: 'flex',
     alignItems: 'flex-start',
     gap: '0.5rem',
     flex: 1,
+    minWidth: '0px',
   },
   typeEmoji: {
     fontSize: '1.25rem',
     marginTop: '0.125rem',
+    flexShrink: 0,
   },
   title: {
     margin: 0,
@@ -233,6 +236,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     color: '#1e293b',
     lineHeight: 1.4,
+    wordBreak: 'break-word',
   },
   badgeGroup: {
     display: 'flex',
@@ -303,7 +307,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '0.5rem',
     fontSize: '0.8125rem',
-  },
+    flexWrap: 'wrap',
+  } as any,
   assignmentLabel: {
     fontWeight: 600,
     color: '#475569',
@@ -349,9 +354,11 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     gap: '0.5rem',
     marginTop: '0.5rem',
-  },
+    flexWrap: 'wrap',
+  } as any,
   viewBtn: {
     flex: 1,
+    minWidth: '80px',
     padding: '0.5rem 0.75rem',
     background: '#f1f5f9',
     border: '1px solid #cbd5e1',
@@ -364,6 +371,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   assignBtn: {
     flex: 1,
+    minWidth: '80px',
     padding: '0.5rem 0.75rem',
     background: '#3b82f6',
     color: 'white',
@@ -376,6 +384,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   progressBtn: {
     flex: 1,
+    minWidth: '80px',
     padding: '0.5rem 0.75rem',
     background: '#f59e0b',
     color: 'white',
@@ -388,6 +397,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   completeBtn: {
     flex: 1,
+    minWidth: '80px',
     padding: '0.5rem 0.75rem',
     background: '#10b981',
     color: 'white',

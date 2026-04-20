@@ -202,9 +202,11 @@ const styles: Record<string, React.CSSProperties> = {
     overflowX: 'auto',
     borderRadius: '0.75rem',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
+    WebkitOverflowScrolling: 'touch',
+  } as any,
   table: {
     width: '100%',
+    minWidth: '800px',
     background: 'white',
     borderCollapse: 'collapse',
   },
@@ -250,7 +252,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-  },
+    wordBreak: 'break-word',
+  } as any,
   taskTitle: {
     fontWeight: 500,
   },
@@ -307,7 +310,8 @@ const styles: Record<string, React.CSSProperties> = {
   actionCell: {
     display: 'flex',
     gap: '0.375rem',
-  },
+    flexWrap: 'wrap',
+  } as any,
   smallBtn: {
     padding: '0.375rem 0.5rem',
     background: '#f1f5f9',

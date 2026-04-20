@@ -261,7 +261,12 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '1rem',
     marginBottom: '1.5rem',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
+    '@media (max-width: 640px)': {
+      padding: '0.75rem',
+      marginBottom: '1rem',
+      borderRadius: '0.5rem',
+    },
+  } as any,
   searchWrapper: {
     marginBottom: '1rem',
   },
@@ -290,6 +295,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '0.5rem',
     transition: 'all 0.2s',
+    minWidth: '120px',
+    whiteSpace: 'nowrap',
   },
   badge: {
     background: '#ef4444',
@@ -328,7 +335,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
     gap: '1.5rem',
-  },
+  } as any,
   filterGroup: {
     display: 'flex',
     flexDirection: 'column',
