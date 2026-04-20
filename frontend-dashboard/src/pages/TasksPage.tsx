@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { tasks, disasters as disastersApi } from '../lib/api';
+import { useTasks } from '../features/tasks/hooks';
 import { TaskFilterBar, TaskCard, TaskTableView, TaskKanbanView } from '../components/tasks';
 import { MOCK_TASKS_EXTENDED } from '../lib/mockData';
 
@@ -23,49 +23,22 @@ interface TaskData {
   createdAt?: Date;
 }
 
-interface Disaster {
-  id: string;
-  name: string;
-}
-
 export default function TasksPage() {
-  const [allTasks, setAllTasks] = useState<TaskData[]>([]);
-  const [filteredTasks, setFilteredTasks] = useState<TaskData[]>([]);
-  const [disasterList, setDisasterList] = useState<Disaster[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'table' | 'kanban'>('grid');
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [activeFilterCount, setActiveFilterCount] = useState(0);
 
-  // Load initial data
+  // Use React Query hook to fetch tasks
+  const { data: tasksData } = useTasks();
+  
+  // Use mock data as fallback and cast to TaskData (mock data includes all required fields)
+  const allTasks = (tasksData?.tasks?.length ? (tasksData.tasks as unknown as TaskData[]) : (MOCK_TASKS_EXTENDED as TaskData[]));
+  const [filteredTasks, setFilteredTasks] = useState<TaskData[]>(allTasks);
+
+  // Sync filtered tasks when allTasks change
   useEffect(() => {
-    loadTasks();
-    loadDisasters();
-  }, []);
-
-  const loadTasks = async () => {
-    try {
-      const result = await tasks.list();
-      // Use real data if available, fall back to mock
-      const taskData = result.length > 0 ? result as TaskData[] : MOCK_TASKS_EXTENDED as TaskData[];
-      setAllTasks(taskData);
-      setFilteredTasks(taskData);
-    } catch (err) {
-      // Fall back to mock data on error
-      const mockData = MOCK_TASKS_EXTENDED as TaskData[];
-      setAllTasks(mockData);
-      setFilteredTasks(mockData);
-    }
-  };
-
-  const loadDisasters = async () => {
-    try {
-      const result = await disastersApi.list({ status: 'ACTIVE' });
-      setDisasterList(result.length > 0 ? result : []);
-    } catch (err) {
-      // Silently fail if can't load disasters
-      setDisasterList([]);
-    }
-  };
+    setFilteredTasks(allTasks);
+  }, [allTasks]);
 
   // Handle search
   const handleSearch = (query: string) => {
@@ -162,10 +135,13 @@ export default function TasksPage() {
     // TODO: Open assignment modal
   };
 
-  const mappedDisasters = disasterList.map((d) => ({
-    id: d.id,
-    name: d.name,
-  }));
+  const mappedDisasters = allTasks.reduce((acc, task) => {
+    const existing = acc.find(d => d.id === task.disasterId);
+    if (!existing) {
+      acc.push({ id: task.disasterId, name: task.disasterName });
+    }
+    return acc;
+  }, [] as Array<{ id: string; name: string }>);
 
   return (
     <div style={styles.container}>
