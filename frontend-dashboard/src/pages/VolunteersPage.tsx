@@ -1,124 +1,177 @@
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { volunteers } from '../lib/api';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-// Fix leaflet marker icons
-delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import VolunteerFilterBar, { VolunteerFilters } from '../features/volunteers/components/VolunteerFilterBar';
+import VolunteerListView from '../features/volunteers/components/VolunteerListView';
+import { VolunteerCardData } from '../features/volunteers/components/VolunteerCard';
+import mockData from '../lib/mockData';
 
 interface Volunteer {
   id: string;
-  name: string;
-  skills: string[];
-  isAvailable: boolean;
-  currentLat?: number;
-  currentLng?: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  avatar?: string;
+  primarySkill?: string;
   burnoutScore: number;
+  currentWorkload: number;
+  maxWorkload: number;
+  availability: 'available' | 'on_break' | 'unavailable';
+  lastActiveAt?: string;
+  disasterCount: number;
+  location?: string;
 }
 
-export default function VolunteersPage() {
-  const [list, setList] = useState<Volunteer[]>([]);
-  const [filter, setFilter] = useState('');
+const mapVolunteerToCard = (volunteer: Volunteer): VolunteerCardData => ({
+  id: volunteer.id,
+  firstName: volunteer.firstName,
+  lastName: volunteer.lastName,
+  email: volunteer.email,
+  phone: volunteer.phone,
+  avatar: volunteer.avatar,
+  primarySkill: volunteer.primarySkill,
+  burnoutScore: volunteer.burnoutScore,
+  currentWorkload: volunteer.currentWorkload,
+  maxWorkload: volunteer.maxWorkload,
+  availability: volunteer.availability,
+  lastActiveAt: volunteer.lastActiveAt,
+  disasterCount: volunteer.disasterCount,
+  location: volunteer.location,
+});
 
+export default function VolunteersPage() {
+  const navigate = useNavigate();
+  const [volunteers, setVolunteers] = useState<VolunteerCardData[]>([]);
+  const [filters, setFilters] = useState<VolunteerFilters>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Load volunteers on mount
   useEffect(() => {
-    volunteers.list().then(setList);
+    const loadVolunteers = async () => {
+      try {
+        setIsLoading(true);
+        // Use mock data for now (will be replaced with API call)
+        const volunteers = mockData.MOCK_VOLUNTEER_SUGGESTIONS.map((suggestion) => ({
+          id: suggestion.volunteerId,
+          firstName: suggestion.volunteer.name.split(' ')[0],
+          lastName: suggestion.volunteer.name.split(' ')[1] || '',
+          email: `${suggestion.volunteer.name.toLowerCase().replace(/ /g, '.')}@example.com`,
+          phone: undefined,
+          avatar: suggestion.volunteer.avatar,
+          primarySkill: suggestion.volunteer.skills[0],
+          burnoutScore: suggestion.volunteer.burnoutScore,
+          currentWorkload: suggestion.volunteer.currentActiveTasks,
+          maxWorkload: 10,
+          availability: (suggestion.volunteer.isAvailable ? 'available' : 'unavailable') as 'available' | 'unavailable',
+          lastActiveAt: new Date().toISOString(),
+          disasterCount: 3,
+          location: 'India',
+          tasks: [],
+          skills: [],
+        }));
+        const data = volunteers.map(mapVolunteerToCard);
+        setVolunteers(data);
+      } catch (error) {
+        console.error('Failed to load volunteers:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadVolunteers();
   }, []);
 
-  const filtered = list.filter((v) =>
-    v.name.toLowerCase().includes(filter.toLowerCase()) ||
-    v.skills.some((s) => s.toLowerCase().includes(filter.toLowerCase()))
+  // Handle responsive layout
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleSelectVolunteer = useCallback(
+    (id: string) => {
+      navigate(`/volunteers/${id}`);
+    },
+    [navigate]
   );
 
-  const withLocation = filtered.filter((v) => v.currentLat && v.currentLng);
-
-  // Center on India by default, or first volunteer with location
-  const center: [number, number] = withLocation.length > 0
-    ? [withLocation[0].currentLat!, withLocation[0].currentLng!]
-    : [20.5937, 78.9629];
+  const handleAction = useCallback(
+    (action: string, id: string) => {
+      switch (action) {
+        case 'view_details':
+          navigate(`/volunteers/${id}`);
+          break;
+        case 'wellness_checkin':
+          // Open wellness check-in modal
+          console.log('Wellness check-in for:', id);
+          break;
+        case 'message':
+          // Open messaging interface
+          console.log('Message:', id);
+          break;
+        case 'reassign_tasks':
+          // Open task reassignment modal
+          console.log('Reassign tasks for:', id);
+          break;
+        default:
+          break;
+      }
+    },
+    [navigate]
+  );
 
   return (
     <div style={styles.container}>
+      {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.title}>Volunteers</h1>
-        <input
-          placeholder="Search by name or skill..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          style={styles.search}
-        />
-      </div>
-
-      <div style={styles.content}>
-        {/* Map */}
-        <div style={styles.mapContainer}>
-          <MapContainer center={center} zoom={5} style={{ height: '100%', width: '100%', borderRadius: '0.75rem' }}>
-            <TileLayer
-              attribution='&copy; OpenStreetMap'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {withLocation.map((v) => (
-              <Marker key={v.id} position={[v.currentLat!, v.currentLng!]}>
-                <Popup>
-                  <strong>{v.name}</strong><br />
-                  {v.skills.join(', ')}<br />
-                  {v.isAvailable ? '✅ Available' : '❌ Busy'}<br />
-                  Burnout: {v.burnoutScore}/10
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
-        </div>
-
-        {/* List */}
-        <div style={styles.listContainer}>
-          <h3 style={styles.listTitle}>All Volunteers ({filtered.length})</h3>
-          <div style={styles.list}>
-            {filtered.map((v) => (
-              <div key={v.id} style={styles.card}>
-                <div style={styles.cardHeader}>
-                  <span style={styles.name}>{v.name}</span>
-                  <span style={{ ...styles.status, background: v.isAvailable ? '#22c55e' : '#ef4444' }}>
-                    {v.isAvailable ? 'Available' : 'Busy'}
-                  </span>
-                </div>
-                <div style={styles.skills}>
-                  {v.skills.map((s) => (
-                    <span key={s} style={styles.skill}>{s}</span>
-                  ))}
-                </div>
-                <div style={styles.meta}>
-                  Burnout Score: <strong style={{ color: v.burnoutScore > 6 ? '#ef4444' : '#22c55e' }}>{v.burnoutScore}/10</strong>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div>
+          <h1 style={styles.title}>Volunteers</h1>
+          <p style={styles.subtitle}>Manage your volunteer team and monitor wellness</p>
         </div>
       </div>
+
+      {/* Filter Bar */}
+      <VolunteerFilterBar
+        onFiltersChange={setFilters}
+        isMobile={isMobile}
+      />
+
+      {/* List View */}
+      <VolunteerListView
+        volunteers={volunteers}
+        filters={filters}
+        onSelectVolunteer={handleSelectVolunteer}
+        onAction={handleAction}
+        isLoading={isLoading}
+        isMobile={isMobile}
+      />
     </div>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { padding: '2rem', height: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' },
-  title: { margin: 0, color: '#1e293b' },
-  search: { padding: '0.75rem 1rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem', width: '300px' },
-  content: { display: 'flex', gap: '1.5rem', flex: 1, minHeight: 0 },
-  mapContainer: { flex: 2, background: 'white', borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' },
-  listContainer: { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 },
-  listTitle: { margin: '0 0 1rem', color: '#1e293b' },
-  list: { flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  card: { background: 'white', padding: '1rem', borderRadius: '0.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
-  cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' },
-  name: { fontWeight: 600, color: '#1e293b' },
-  status: { padding: '0.25rem 0.5rem', borderRadius: '9999px', color: 'white', fontSize: '0.625rem', fontWeight: 600 },
-  skills: { display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.5rem' },
-  skill: { padding: '0.125rem 0.5rem', background: '#e0e7ff', color: '#3730a3', borderRadius: '9999px', fontSize: '0.75rem' },
-  meta: { fontSize: '0.75rem', color: '#64748b' },
+  container: {
+    padding: '2rem',
+    height: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  title: {
+    margin: 0,
+    fontSize: '1.875rem',
+    fontWeight: 700,
+    color: '#1e293b',
+  },
+  subtitle: {
+    margin: '0.5rem 0 0 0',
+    fontSize: '0.875rem',
+    color: '#64748b',
+  },
 };
