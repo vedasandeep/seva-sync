@@ -97,7 +97,12 @@ export async function saveTasks(tasks: SevasyncDB['tasks']['value'][]) {
   const database = await getDB();
   const tx = database.transaction('tasks', 'readwrite');
   await Promise.all([
-    ...tasks.map((task) => tx.store.put({ ...task, syncStatus: 'synced', updatedAt: new Date().toISOString() })),
+    ...tasks.map((task) => tx.store.put({ 
+      ...task, 
+      syncStatus: 'synced',
+      lastSyncedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString() 
+    })),
     tx.done,
   ]);
 }
@@ -126,6 +131,10 @@ export async function updateTaskOffline(id: string, updates: Partial<SevasyncDB[
       ...updates,
       syncStatus: 'pending',
       updatedAt: new Date().toISOString(),
+      // Preserve server metadata for conflict detection
+      version: task.version,
+      lastUpdatedAt: task.lastUpdatedAt,
+      updatedBy: task.updatedBy,
     });
   }
 }
@@ -188,4 +197,75 @@ export async function updateVolunteerLocation(lat: number, lon: number) {
   if (volunteer) {
     await database.put('volunteer', { ...volunteer, currentLat: lat, currentLon: lon });
   }
+}
+
+// ============================================
+// SYNC STATE MANAGEMENT
+// ============================================
+
+/**
+ * Mark a task as synced with server metadata
+ */
+export async function markTaskSynced(id: string, serverData: Partial<SevasyncDB['tasks']['value']>) {
+  const database = await getDB();
+  const task = await database.get('tasks', id);
+  if (task) {
+    await database.put('tasks', {
+      ...task,
+      ...serverData,
+      syncStatus: 'synced',
+      lastSyncedAt: new Date().toISOString(),
+      syncError: undefined, // Clear any previous errors
+    });
+  }
+}
+
+/**
+ * Mark a task as having a conflict (requires user resolution)
+ */
+export async function markTaskConflict(id: string, localData: Partial<SevasyncDB['tasks']['value']>) {
+  const database = await getDB();
+  const task = await database.get('tasks', id);
+  if (task) {
+    // Store the conflict metadata for resolution UI
+    await database.put('tasks', {
+      ...task,
+      ...localData,
+      syncStatus: 'conflict',
+      // Server version is already in the task, modal will compare local vs server
+    });
+  }
+}
+
+/**
+ * Mark a task sync as failed with error message
+ */
+export async function markTaskSyncFailed(id: string, error: string) {
+  const database = await getDB();
+  const task = await database.get('tasks', id);
+  if (task) {
+    await database.put('tasks', {
+      ...task,
+      syncStatus: 'pending', // Keep as pending for retry
+      syncError: error,
+    });
+  }
+}
+
+/**
+ * Get all tasks with pending or conflict status
+ */
+export async function getPendingTasks() {
+  const database = await getDB();
+  const all = await database.getAll('tasks');
+  return all.filter(t => t.syncStatus === 'pending' || t.syncStatus === 'conflict');
+}
+
+/**
+ * Get all tasks with conflict status
+ */
+export async function getConflictTasks() {
+  const database = await getDB();
+  const all = await database.getAll('tasks');
+  return all.filter(t => t.syncStatus === 'conflict');
 }
