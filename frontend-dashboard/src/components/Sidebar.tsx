@@ -9,6 +9,7 @@ import {
   FileText,
   BarChart3,
   Zap,
+  Phone,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
@@ -17,6 +18,7 @@ const navigationItems = [
   { path: '/disasters', label: 'Disasters', icon: AlertTriangle },
   { path: '/tasks', label: 'Tasks', icon: CheckSquare },
   { path: '/volunteers', label: 'Volunteers', icon: Users },
+  { path: '/ivr/overview', label: 'IVR System', icon: Phone },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
 ];
 

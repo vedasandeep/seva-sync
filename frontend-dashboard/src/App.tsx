@@ -7,6 +7,9 @@ import DisastersPage from './pages/DisastersPage';
 import DisasterDetailPage from './pages/DisasterDetailPage';
 import TasksPage from './pages/TasksPage';
 import VolunteersPage from './pages/VolunteersPage';
+import IvrSimulatorPage from './pages/IvrSimulatorPage';
+import IvrCallHistoryPage from './pages/IvrCallHistoryPage';
+import IvrOverviewPage from './pages/IvrOverviewPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -30,6 +33,9 @@ function AppRoutes() {
         <Route path="/disasters/:id" element={<DisasterDetailPage />} />
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/volunteers" element={<VolunteersPage />} />
+        <Route path="/ivr/overview" element={<IvrOverviewPage />} />
+        <Route path="/ivr/simulator" element={<IvrSimulatorPage />} />
+        <Route path="/ivr/history" element={<IvrCallHistoryPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" />} />
     </Routes>
