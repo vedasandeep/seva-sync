@@ -15,6 +15,7 @@ interface OfflineState {
   pendingSyncCount: number;
   lastSyncTime: Date | null;
   syncInProgress: boolean;
+  conflictItems: string[]; // IDs of items with conflicts
   
   // Actions
   setIsOffline: (offline: boolean) => void;
@@ -24,6 +25,7 @@ interface OfflineState {
   setSyncInProgress: (inProgress: boolean) => void;
   setLastSyncTime: (time: Date | null) => void;
   updatePendingCount: (count: number) => void;
+  setConflictItems: (items: string[]) => void;
 }
 
 export const useOfflineStore = create<OfflineState>()(
@@ -34,6 +36,7 @@ export const useOfflineStore = create<OfflineState>()(
       pendingSyncCount: 0,
       lastSyncTime: null,
       syncInProgress: false,
+      conflictItems: [],
 
       setIsOffline: (offline) => set({ isOffline: offline }),
 
@@ -60,6 +63,8 @@ export const useOfflineStore = create<OfflineState>()(
       setLastSyncTime: (time) => set({ lastSyncTime: time }),
 
       updatePendingCount: (count) => set({ pendingSyncCount: count }),
+
+      setConflictItems: (items) => set({ conflictItems: items }),
     }),
     {
       name: 'offline-store',

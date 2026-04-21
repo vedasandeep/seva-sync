@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { processQueue } from '../lib/offline-sync';
 import { useOfflineStore } from '../stores/offlineStore';
-import { getVolunteer } from '../lib/db';
+import { getVolunteer, getSyncQueue } from '../lib/db';
 
 /**
  * Hook for triggering and monitoring sync operations
@@ -12,6 +12,15 @@ export function useOfflineSync() {
   const setLastSyncTime = useOfflineStore((state) => state.setLastSyncTime);
   const updatePendingCount = useOfflineStore((state) => state.updatePendingCount);
   const pendingSyncCount = useOfflineStore((state) => state.pendingSyncCount);
+
+  // Sync pending count from IndexedDB on mount
+  useEffect(() => {
+    const syncPendingCount = async () => {
+      const queue = await getSyncQueue();
+      updatePendingCount(queue.length);
+    };
+    syncPendingCount();
+  }, [updatePendingCount]);
 
   const syncNow = useCallback(async () => {
     if (syncing) return { synced: 0, failed: 0 };
@@ -36,14 +45,17 @@ export function useOfflineSync() {
 
       // Update state
       setLastSyncTime(new Date());
-      updatePendingCount(Math.max(0, pendingSyncCount - (result.synced + result.failed)));
+      
+      // Update pending count from DB
+      const queue = await getSyncQueue();
+      updatePendingCount(queue.length);
 
       return result;
     } finally {
       setSyncing(false);
       setSyncInProgress(false);
     }
-  }, [syncing, setSyncInProgress, setLastSyncTime, updatePendingCount, pendingSyncCount]);
+  }, [syncing, setSyncInProgress, setLastSyncTime, updatePendingCount]);
 
   return {
     syncNow,
