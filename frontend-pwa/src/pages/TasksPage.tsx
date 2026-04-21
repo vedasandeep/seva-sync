@@ -5,6 +5,7 @@ import { TaskList } from '../features/tasks/components';
 import { useOffline, useOfflineSync } from '../hooks';
 import { fetchTasks, fetchNearbyTasks } from '../lib/api';
 import { Layout, Tabs, Button } from '../components';
+import { SyncQueueDrawer } from '../components/SyncQueueDrawer';
 
 export default function TasksPage() {
   const { volunteer } = useAuth();
@@ -15,6 +16,7 @@ export default function TasksPage() {
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingTaskId, setLoadingTaskId] = useState<string | null>(null);
+  const [syncDrawerOpen, setSyncDrawerOpen] = useState(false);
 
   // Load tasks from DB on mount
   useEffect(() => {
@@ -128,17 +130,30 @@ export default function TasksPage() {
             Find Nearby Tasks
           </Button>
           <Button
+            onClick={() => setSyncDrawerOpen(true)}
+            variant="primary"
+          >
+            📋 Sync Queue ({pendingSyncCount})
+          </Button>
+          <Button
             onClick={() => syncNow()}
             loading={syncing}
-            disabled={syncing || !isOffline || pendingSyncCount === 0}
+            disabled={syncing || isOffline || pendingSyncCount === 0}
           >
-            {syncing ? 'Syncing...' : `Sync Now (${pendingSyncCount})`}
+            {syncing ? 'Syncing...' : 'Sync Now'}
           </Button>
         </div>
 
         {/* Tabs */}
         <Tabs tabs={tabs} defaultValue="my" />
       </div>
+
+      {/* Sync Queue Drawer */}
+      <SyncQueueDrawer
+        isOpen={syncDrawerOpen}
+        onClose={() => setSyncDrawerOpen(false)}
+        onRetry={syncNow}
+      />
     </Layout>
   );
 }
