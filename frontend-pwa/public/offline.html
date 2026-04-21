@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SevaSync - Offline</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .offline-container {
+        background: white;
+        border-radius: 16px;
+        padding: 40px 30px;
+        max-width: 400px;
+        width: 100%;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .offline-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 24px;
+        background: #e3f2fd;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+      }
+
+      .offline-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a237e;
+        margin-bottom: 12px;
+      }
+
+      .offline-subtitle {
+        font-size: 16px;
+        color: #424242;
+        margin-bottom: 28px;
+        line-height: 1.5;
+      }
+
+      .offline-status {
+        background: #fff3e0;
+        border-left: 4px solid #ff9800;
+        padding: 16px;
+        margin-bottom: 28px;
+        border-radius: 4px;
+        text-align: left;
+      }
+
+      .offline-status-title {
+        font-weight: 600;
+        color: #e65100;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .offline-status-text {
+        color: #bf360c;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .offline-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .offline-btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .offline-btn-primary {
+        background: #2196f3;
+        color: white;
+      }
+
+      .offline-btn-primary:active {
+        background: #1976d2;
+        transform: scale(0.98);
+      }
+
+      .offline-btn-secondary {
+        background: #e0e0e0;
+        color: #424242;
+      }
+
+      .offline-btn-secondary:active {
+        background: #bdbdbd;
+        transform: scale(0.98);
+      }
+
+      .offline-cached-note {
+        margin-top: 24px;
+        padding: 16px;
+        background: #e8f5e9;
+        border-radius: 8px;
+        border-left: 4px solid #4caf50;
+      }
+
+      .offline-cached-note-title {
+        color: #1b5e20;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .offline-cached-note-text {
+        color: #2e7d32;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .offline-tip {
+        margin-top: 20px;
+        padding: 12px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        font-size: 12px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="offline-container">
+      <div class="offline-icon">📡</div>
+      <h1 class="offline-title">You're Offline</h1>
+      <p class="offline-subtitle">SevaSync can't reach the server right now, but your data is safe.</p>
+
+      <div class="offline-status">
+        <div class="offline-status-title">🔄 What This Means</div>
+        <div class="offline-status-text">
+          <ul style="text-align: left; list-position: inside; font-size: 13px;">
+            <li>Your tasks are still visible</li>
+            <li>You can accept and complete tasks</li>
+            <li>Changes will sync when you're back online</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="offline-cached-note">
+        <div class="offline-cached-note-title">✓ Your Data is Saved</div>
+        <div class="offline-cached-note-text">
+          SevaSync has cached your recent tasks and assignments locally. All your updates will sync when your connection returns.
+        </div>
+      </div>
+
+      <div class="offline-actions">
+        <button class="offline-btn offline-btn-primary" onclick="location.reload()">Try Connecting Again</button>
+        <button class="offline-btn offline-btn-secondary" onclick="goToApp()">Continue Offline</button>
+      </div>
+
+      <div class="offline-tip">
+        <strong>💡 Tip:</strong> Keep the app open and SevaSync will automatically sync your work when you're back online.
+      </div>
+    </div>
+
+    <script>
+      // Try to connect in the background and auto-refresh if successful
+      function checkConnection() {
+        fetch('/api/health', { 
+          method: 'HEAD',
+          mode: 'no-cors'
+        })
+          .then(() => {
+            // Connection restored, reload the app
+            location.reload();
+          })
+          .catch(() => {
+            // Still offline, try again in 3 seconds
+            setTimeout(checkConnection, 3000);
+          });
+      }
+
+      // Start checking for connection
+      checkConnection();
+
+      // Navigate to the app
+      function goToApp() {
+        window.location.href = '/';
+      }
+
+      // Also listen for online event
+      window.addEventListener('online', () => {
+        location.reload();
+      });
+    </script>
+  </body>
+</html>
