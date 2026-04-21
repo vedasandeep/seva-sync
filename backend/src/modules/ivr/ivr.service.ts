@@ -273,3 +273,75 @@ export async function updateVolunteerActivity(volunteerId: string) {
     data: { lastActiveAt: new Date() },
   });
 }
+
+/**
+ * Get volunteer by ID (for IVR operations)
+ */
+export async function getVolunteerById(volunteerId: string) {
+  return prisma.volunteer.findUnique({
+    where: { id: volunteerId },
+    select: {
+      id: true,
+      name: true,
+      phoneHash: true,
+      language: true,
+      isAvailable: true,
+    },
+  });
+}
+
+/**
+ * Get IVR call log by call SID
+ */
+export async function getCallLog(callSid: string) {
+  return prisma.iVRLog.findFirst({
+    where: { callSid },
+    include: {
+      volunteer: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+}
+
+/**
+ * Get total IVR calls for a volunteer
+ */
+export async function getVolunteerCallCount(volunteerId: string) {
+  return prisma.iVRLog.count({
+    where: { volunteerId },
+  });
+}
+
+/**
+ * Get IVR stats for dashboard
+ */
+export async function getIvrStats() {
+  const totalCalls = await prisma.iVRLog.count();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const callsToday = await prisma.iVRLog.count({
+    where: {
+      createdAt: {
+        gte: today,
+      },
+    },
+  });
+
+  const volunteersWithCalls = await prisma.iVRLog.findMany({
+    distinct: ['volunteerId'],
+    select: {
+      volunteerId: true,
+    },
+  });
+
+  return {
+    totalCalls,
+    callsToday,
+    volunteersUsingIvr: volunteersWithCalls.length,
+  };
+}

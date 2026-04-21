@@ -323,3 +323,175 @@ export async function handleCallStatus(req: Request, res: Response) {
   // Exotel expects 200 OK
   res.status(200).send('OK');
 }
+
+/**
+ * Initiate an outbound call to a volunteer
+ * POST /api/ivr/call/initiate
+ * Body: { volunteerId: string; action: 'get_tasks' | 'wellness_check' | 'announcement' }
+ */
+export async function initiateCall(req: Request, res: Response) {
+  const { volunteerId, action } = req.body;
+  
+  try {
+    if (!volunteerId || !action) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing volunteerId or action',
+      });
+    }
+
+    // Get volunteer
+    const volunteer = await ivrService.getVolunteerById(volunteerId);
+    if (!volunteer) {
+      return res.status(404).json({
+        success: false,
+        error: 'Volunteer not found',
+      });
+    }
+
+    // In production, call IVR provider (Twilio/Exotel) here
+    // For now, log the call initiation
+    const callSid = `OUT-${Date.now()}`;
+    await ivrService.logIvrCall({
+      volunteerId,
+      callSid,
+      direction: 'outbound',
+      phoneNumber: volunteer.phoneHash,
+      action: `initiate_${action}`,
+      success: true,
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        callSid,
+        volunteerId,
+        action,
+        message: `Initiating ${action} call to ${volunteer.name}`,
+      },
+    });
+  } catch (error) {
+    console.error('[IVR] Error initiating call:', error);
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+}
+
+/**
+ * Get call details by call SID
+ * GET /api/ivr/call/:callSid
+ */
+export async function getCallDetails(req: Request, res: Response) {
+  const { callSid } = req.params;
+  
+  try {
+    const callLog = await ivrService.getCallLog(callSid);
+    if (!callLog) {
+      return res.status(404).json({
+        success: false,
+        error: 'Call not found',
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: callLog,
+    });
+  } catch (error) {
+    console.error('[IVR] Error getting call details:', error);
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+}
+
+/**
+ * Hangup an active call
+ * POST /api/ivr/call/:callSid/hangup
+ */
+export async function hangupCall(req: Request, res: Response) {
+  const { callSid } = req.params;
+  
+  try {
+    if (!callSid) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing callSid',
+      });
+    }
+
+    // In production, call IVR provider to hangup
+    // For now, just log it
+    const callLog = await ivrService.getCallLog(callSid);
+    if (!callLog) {
+      return res.status(404).json({
+        success: false,
+        error: 'Call not found',
+      });
+    }
+
+    console.log(`[IVR] Hanging up call: ${callSid}`);
+
+    return res.json({
+      success: true,
+      data: {
+        callSid,
+        message: 'Call terminated',
+      },
+    });
+  } catch (error) {
+    console.error('[IVR] Error hanging up call:', error);
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+}
+
+/**
+ * Send DTMF digits to an active call
+ * POST /api/ivr/call/:callSid/dtmf
+ * Body: { digits: string }
+ */
+export async function sendDtmf(req: Request, res: Response) {
+  const { callSid } = req.params;
+  const { digits } = req.body;
+  
+  try {
+    if (!callSid || !digits) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing callSid or digits',
+      });
+    }
+
+    // Validate digits format (0-9, *, #)
+    if (!/^[0-9*#]+$/.test(digits)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid digits format. Use 0-9, *, #',
+      });
+    }
+
+    // In production, call IVR provider to send DTMF
+    console.log(`[IVR] Sending DTMF ${digits} to call ${callSid}`);
+
+    return res.json({
+      success: true,
+      data: {
+        callSid,
+        digits,
+        message: `DTMF sent: ${digits}`,
+      },
+    });
+  } catch (error) {
+    console.error('[IVR] Error sending DTMF:', error);
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+}
