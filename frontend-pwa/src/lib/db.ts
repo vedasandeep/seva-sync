@@ -19,6 +19,12 @@ interface SevasyncDB extends DBSchema {
       assignedAt?: string;
       syncStatus: 'synced' | 'pending' | 'conflict';
       updatedAt: string;
+      // Conflict detection fields
+      version?: number;
+      lastUpdatedAt?: string;
+      updatedBy?: string;
+      lastSyncedAt?: string;
+      syncError?: string;
     };
     indexes: { 'by-status': string; 'by-sync': string };
   };
