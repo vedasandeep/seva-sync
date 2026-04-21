@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { useOffline } from '../hooks/useOffline';
 import { useUIStore } from '../stores/uiStore';
+import { useOfflineStore } from '../stores/offlineStore';
 import { Badge } from './ui/Badge';
 import { ToastContainer } from './ui/Toast';
 import { Avatar } from './ui/Avatar';
@@ -13,6 +14,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children, title, volunteerName = 'Volunteer' }) => {
   const { isOffline, pendingSyncCount } = useOffline();
+  const syncInProgress = useOfflineStore((state) => state.syncInProgress);
   const toasts = useUIStore((state) => state.toasts);
   const removeToast = useUIStore((state) => state.removeToast);
 
@@ -28,12 +30,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, title, volunteerName =
           <div className="flex items-center gap-4">
             {isOffline && (
               <Badge variant="warning">
-                Offline
+                📡 Offline
               </Badge>
             )}
-            {pendingSyncCount > 0 && (
+            {syncInProgress && (
               <Badge variant="info">
-                {pendingSyncCount} pending
+                <span className="inline-block w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-1" />
+                Syncing...
+              </Badge>
+            )}
+            {pendingSyncCount > 0 && !syncInProgress && (
+              <Badge variant="warning">
+                ⏳ {pendingSyncCount} pending
+              </Badge>
+            )}
+            {pendingSyncCount === 0 && !isOffline && !syncInProgress && (
+              <Badge variant="success">
+                ✓ All synced
               </Badge>
             )}
             <Avatar name={volunteerName} size="md" />

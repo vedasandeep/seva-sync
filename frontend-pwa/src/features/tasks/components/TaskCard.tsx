@@ -9,6 +9,7 @@ interface Task {
   urgency: string;
   status: string;
   syncStatus: 'synced' | 'pending' | 'conflict';
+  syncError?: string;
 }
 
 interface TaskCardProps {
@@ -45,7 +46,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   };
 
   return (
-    <Card hoverable className="space-y-3">
+    <Card hoverable className={`space-y-3 ${task.syncStatus === 'conflict' ? 'border-orange-300 bg-orange-50' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-900">{task.title}</h3>
@@ -62,13 +63,30 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         <Badge variant={getStatusColor(task.status)}>
           {task.status}
         </Badge>
+        
+        {/* Sync Status Indicator */}
         {task.syncStatus === 'pending' && (
-          <Badge variant="warning">Pending sync</Badge>
+          <Badge variant="warning" className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 bg-yellow-600 rounded-full animate-pulse" />
+            Pending sync
+          </Badge>
         )}
+        
         {task.syncStatus === 'conflict' && (
-          <Badge variant="danger">Conflict</Badge>
+          <Badge variant="danger">⚠️ Needs Resolution</Badge>
+        )}
+        
+        {task.syncStatus === 'synced' && (
+          <Badge variant="success">✓ Synced</Badge>
         )}
       </div>
+
+      {/* Error Message */}
+      {task.syncError && (
+        <div className="bg-red-50 border border-red-200 rounded p-2">
+          <p className="text-xs text-red-700">❌ {task.syncError}</p>
+        </div>
+      )}
 
       {(onAccept || onComplete) && (
         <div className="flex gap-2 pt-2 border-t border-gray-200">
@@ -76,7 +94,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             <button
               onClick={onAccept}
               disabled={loading}
-              className="flex-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-300 font-medium text-sm"
+              className="flex-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-300 font-medium text-sm min-h-[44px] flex items-center justify-center transition-colors"
+              title="Accept Task"
             >
               {loading ? 'Processing...' : 'Accept Task'}
             </button>
@@ -85,7 +104,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             <button
               onClick={onComplete}
               disabled={loading}
-              className="flex-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 font-medium text-sm"
+              className="flex-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 font-medium text-sm min-h-[44px] flex items-center justify-center transition-colors"
+              title="Mark Task Complete"
             >
               {loading ? 'Processing...' : 'Mark Complete'}
             </button>
