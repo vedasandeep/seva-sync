@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import TasksPage from './pages/TasksPage';
 import ProfilePage from './pages/ProfilePage';
 import { initDB } from './lib/db';
+import { useBackgroundSync } from './hooks/useBackgroundSync';
 import { useEffect, useState } from 'react';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -23,6 +24,9 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const [dbReady, setDbReady] = useState(false);
+  
+  // Start background sync after DB is ready
+  useBackgroundSync();
 
   useEffect(() => {
     initDB().then(() => setDbReady(true));
