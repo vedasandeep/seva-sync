@@ -104,31 +104,31 @@ export default function ReportsPage() {
         </p>
       </div>
 
-      {/* Date Range Filter */}
-      <WidgetCard className="mb-6">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Report Period</h2>
-          <div className="flex gap-3">
-            {[
-              { value: 'week', label: 'Last 7 Days' },
-              { value: 'month', label: 'Last 30 Days' },
-              { value: 'quarter', label: 'Last 90 Days' },
-            ].map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setDateRange(option.value as 'week' | 'month' | 'quarter')}
-                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                  dateRange === option.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </WidgetCard>
+       {/* Date Range Filter */}
+       <WidgetCard className="mb-6">
+         <div className="p-4 sm:p-6">
+           <h2 className="text-lg font-semibold text-gray-900 mb-4">Report Period</h2>
+           <div className="flex flex-wrap gap-2 sm:gap-3">
+             {[
+               { value: 'week', label: 'Last 7 Days' },
+               { value: 'month', label: 'Last 30 Days' },
+               { value: 'quarter', label: 'Last 90 Days' },
+             ].map((option) => (
+               <button
+                 key={option.value}
+                 onClick={() => setDateRange(option.value as 'week' | 'month' | 'quarter')}
+                 className={`px-4 sm:px-6 py-2 rounded-lg font-medium text-sm transition-colors ${
+                   dateRange === option.value
+                     ? 'bg-blue-600 text-white'
+                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                 }`}
+               >
+                 {option.label}
+               </button>
+             ))}
+           </div>
+         </div>
+       </WidgetCard>
 
       {/* Report Cards Grid */}
       {!selectedReport ? (
@@ -179,93 +179,93 @@ export default function ReportsPage() {
             <div className="p-6 border-b border-slate-200">
               <h2 className="text-lg font-semibold text-gray-900">Quick Stats</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6">
-              <div>
-                <p className="text-sm text-gray-600">Total Reports Generated</p>
-                <p className="text-3xl font-bold text-blue-600 mt-2">128</p>
-                <p className="text-xs text-gray-500 mt-1">Last 30 days</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">PDF Exports</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">89</p>
-                <p className="text-xs text-gray-500 mt-1">Most popular</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">CSV Exports</p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">39</p>
-                <p className="text-xs text-gray-500 mt-1">For analysis</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Avg Export Time</p>
-                <p className="text-3xl font-bold text-amber-600 mt-2">2.3s</p>
-                <p className="text-xs text-gray-500 mt-1">Quick generation</p>
-              </div>
-            </div>
+             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 sm:gap-6 sm:p-6">
+               <div>
+                 <p className="text-xs sm:text-sm text-gray-600">Total Reports Generated</p>
+                 <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">128</p>
+                 <p className="text-xs text-gray-500 mt-1">Last 30 days</p>
+               </div>
+               <div>
+                 <p className="text-xs sm:text-sm text-gray-600">PDF Exports</p>
+                 <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">89</p>
+                 <p className="text-xs text-gray-500 mt-1">Most popular</p>
+               </div>
+               <div>
+                 <p className="text-xs sm:text-sm text-gray-600">CSV Exports</p>
+                 <p className="text-2xl sm:text-3xl font-bold text-purple-600 mt-2">39</p>
+                 <p className="text-xs text-gray-500 mt-1">For analysis</p>
+               </div>
+               <div>
+                 <p className="text-xs sm:text-sm text-gray-600">Avg Export Time</p>
+                 <p className="text-2xl sm:text-3xl font-bold text-amber-600 mt-2">2.3s</p>
+                 <p className="text-xs text-gray-500 mt-1">Quick generation</p>
+               </div>
+             </div>
           </WidgetCard>
         </>
       ) : (
         <>
-          {/* Report Detail View */}
-          <WidgetCard className="mb-6">
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-              <button
-                onClick={() => setSelectedReport(null)}
-                className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-              >
-                ← Back to Reports
-              </button>
-              <h2 className="text-2xl font-bold text-gray-900">{selectedReportData?.name}</h2>
-              <div className="w-20" />
-            </div>
+           {/* Report Detail View */}
+           <WidgetCard className="mb-6">
+             <div className="p-4 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+               <button
+                 onClick={() => setSelectedReport(null)}
+                 className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+               >
+                 ← Back to Reports
+               </button>
+               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{selectedReportData?.name}</h2>
+               <div className="hidden sm:block w-20" />
+             </div>
 
-            <div className="p-6">
-              <p className="text-gray-600 mb-6">{selectedReportData?.description}</p>
+             <div className="p-4 sm:p-6">
+               <p className="text-sm sm:text-base text-gray-600 mb-6">{selectedReportData?.description}</p>
 
-              {/* Report Preview (Mock Data) */}
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Report Summary</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {selectedReportData?.metrics.map((metric) => (
-                    <div key={metric} className="bg-white p-4 rounded-lg border border-slate-200">
-                      <p className="text-xs text-gray-600">{metric}</p>
-                      <p className="text-2xl font-bold text-gray-900 mt-2">
-                        {Math.floor(Math.random() * 1000)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+               {/* Report Preview (Mock Data) */}
+               <div className="bg-gray-50 rounded-lg p-4 sm:p-6 mb-6">
+                 <h3 className="font-semibold text-gray-900 mb-4">Report Summary</h3>
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                   {selectedReportData?.metrics.map((metric) => (
+                     <div key={metric} className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200">
+                       <p className="text-xs text-gray-600">{metric}</p>
+                       <p className="text-lg sm:text-2xl font-bold text-gray-900 mt-2">
+                         {Math.floor(Math.random() * 1000)}
+                       </p>
+                     </div>
+                   ))}
+                 </div>
+               </div>
 
-              {/* Chart Placeholder */}
-              <div className="bg-gray-100 rounded-lg h-64 mb-6 flex items-center justify-center">
-                <p className="text-gray-500">Chart visualization (implemented in Phase 3b)</p>
-              </div>
+               {/* Chart Placeholder */}
+               <div className="bg-gray-100 rounded-lg h-48 sm:h-64 mb-6 flex items-center justify-center">
+                 <p className="text-gray-500 text-sm">Chart visualization (implemented in Phase 3b)</p>
+               </div>
 
-              {/* Export Options */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => handleExportPDF(selectedReport)}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-                >
-                  <FileText size={18} />
-                  Export as PDF
-                </button>
-                <button
-                  onClick={() => handleExportCSV(selectedReport)}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                >
-                  <Download size={18} />
-                  Export as CSV
-                </button>
-                <button
-                  onClick={() => setSelectedReport(null)}
-                  className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </WidgetCard>
+               {/* Export Options */}
+               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                 <button
+                   onClick={() => handleExportPDF(selectedReport)}
+                   className="flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+                 >
+                   <FileText size={18} />
+                   <span>Export PDF</span>
+                 </button>
+                 <button
+                   onClick={() => handleExportCSV(selectedReport)}
+                   className="flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+                 >
+                   <Download size={18} />
+                   <span>Export CSV</span>
+                 </button>
+                 <button
+                   onClick={() => setSelectedReport(null)}
+                   className="px-4 sm:px-6 py-2 sm:py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium text-sm"
+                 >
+                   Close
+                 </button>
+               </div>
+             </div>
+           </WidgetCard>
         </>
       )}
     </DashboardSection>

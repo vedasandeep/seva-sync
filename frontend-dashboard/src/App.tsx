@@ -11,6 +11,7 @@ import IvrSimulatorPage from './pages/IvrSimulatorPage';
 import IvrCallHistoryPage from './pages/IvrCallHistoryPage';
 import IvrOverviewPage from './pages/IvrOverviewPage';
 import ReportsPage from './pages/ReportsPage';
+import ImpactAnalyticsPage from './pages/ImpactAnalyticsPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="/ivr/simulator" element={<IvrSimulatorPage />} />
         <Route path="/ivr/history" element={<IvrCallHistoryPage />} />
         <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/impact-analytics" element={<ImpactAnalyticsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" />} />
     </Routes>

@@ -209,24 +209,24 @@ export default function IvrSimulatorPage() {
         </p>
       </div>
 
-      <DashboardGrid cols={2} gap="lg">
+      <DashboardGrid cols={1} gap="lg">
         {/* Call Controls */}
         <WidgetCard>
-          <div className="p-6 border-b border-slate-200">
-            <h2 className="text-xl font-semibold text-gray-900">Call Setup</h2>
+          <div className="p-4 sm:p-6 border-b border-slate-200">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Call Setup</h2>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="space-y-4">
               {/* Volunteer Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Select Volunteer
                 </label>
                 <select
                   value={selectedVolunteer}
                   onChange={(e) => setSelectedVolunteer(e.target.value)}
                   disabled={callState.status !== 'idle'}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-3 sm:px-4 py-2 border border-slate-300 rounded-lg bg-white text-sm text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   {MOCK_VOLUNTEERS.map((vol) => (
                     <option key={vol.id} value={vol.id}>
@@ -238,10 +238,10 @@ export default function IvrSimulatorPage() {
 
               {/* Call Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Call Status
                 </label>
-                <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-slate-200">
+                <div className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-50 rounded-lg border border-slate-200">
                   <div
                     className={`w-3 h-3 rounded-full ${
                       callState.status === 'idle'
@@ -255,11 +255,11 @@ export default function IvrSimulatorPage() {
                         : 'bg-red-500'
                     }`}
                   />
-                  <span className="text-gray-700 font-medium capitalize">
+                  <span className="text-gray-700 font-medium capitalize text-sm">
                     {callState.status}
                   </span>
                   {callState.status === 'active' && (
-                    <span className="ml-auto text-sm text-gray-600">
+                    <span className="ml-auto text-xs text-gray-600">
                       {formatDuration(callState.callDuration)}
                     </span>
                   )}
@@ -271,32 +271,32 @@ export default function IvrSimulatorPage() {
                 {callState.status === 'idle' ? (
                   <button
                     onClick={handleIncomingCall}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                    className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
                   >
-                    <Phone size={18} />
-                    Start Incoming Call
+                    <Phone size={16} />
+                    Start Call
                   </button>
                 ) : (
                   <>
                     <button
                       onClick={handleEndCall}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                     >
-                      <PhoneOff size={18} />
+                      <PhoneOff size={16} />
                       End Call
                     </button>
                     {callState.status === 'ringing' && (
                       <button
                         onClick={handleRejectCall}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                        className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
                       >
-                        <PhoneMissed size={18} />
-                        Reject Call
+                        <PhoneMissed size={16} />
+                        Reject
                       </button>
                     )}
                     <button
                       onClick={handleClearCall}
-                      className="w-full px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                      className="w-full px-3 sm:px-4 py-2 text-sm bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
                     >
                       Reset
                     </button>
@@ -309,27 +309,27 @@ export default function IvrSimulatorPage() {
 
         {/* IVR Keypad */}
         <WidgetCard>
-          <div className="p-6 border-b border-slate-200">
-            <h2 className="text-xl font-semibold text-gray-900">IVR Keypad</h2>
+          <div className="p-4 sm:p-6 border-b border-slate-200">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">IVR Keypad</h2>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="space-y-4">
               {/* Display */}
-              <div className="bg-gray-900 text-green-400 rounded-lg p-4 font-mono text-center min-h-[80px] flex flex-col justify-center border-2 border-green-400">
-                <div className="text-sm text-gray-500 mb-1">Input:</div>
-                <div className="text-2xl font-bold tracking-wider">
+              <div className="bg-gray-900 text-green-400 rounded-lg p-3 sm:p-4 font-mono text-center min-h-[60px] sm:min-h-[80px] flex flex-col justify-center border-2 border-green-400">
+                <div className="text-xs text-gray-500 mb-1">Input:</div>
+                <div className="text-lg sm:text-2xl font-bold tracking-wider">
                   {callState.inputDigits || '---'}
                 </div>
               </div>
 
               {/* Keypad Grid */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((digit) => (
                   <button
                     key={digit}
                     onClick={() => handleDigitPress(digit)}
                     disabled={callState.status !== 'active'}
-                    className="py-4 bg-slate-200 text-gray-900 rounded-lg font-bold text-lg hover:bg-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+                    className="py-3 sm:py-4 bg-slate-200 text-gray-900 rounded-lg font-bold text-base sm:text-lg hover:bg-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                   >
                     {digit}
                   </button>
@@ -339,10 +339,10 @@ export default function IvrSimulatorPage() {
               {/* Microphone */}
               <button
                 disabled={callState.status !== 'active'}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-sm"
               >
-                <Mic size={18} />
-                Send Voice (Mock)
+                <Mic size={16} />
+                Voice (Mock)
               </button>
             </div>
           </div>
@@ -350,17 +350,17 @@ export default function IvrSimulatorPage() {
 
         {/* Action Selection */}
         <WidgetCard>
-          <div className="p-6 border-b border-slate-200">
-            <h2 className="text-xl font-semibold text-gray-900">Available Actions</h2>
+          <div className="p-4 sm:p-6 border-b border-slate-200">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Available Actions</h2>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="space-y-2">
               {IVR_ACTIONS.map((action) => (
                 <button
                   key={action.digit}
                   onClick={() => handleActionSelect(action.action)}
                   disabled={callState.status !== 'active'}
-                  className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-colors font-medium ${
+                  className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 rounded-lg border-2 transition-colors font-medium text-sm ${
                     callState.selectedAction === action.action
                       ? 'bg-blue-50 border-blue-500 text-blue-700'
                       : 'border-slate-200 text-gray-700 hover:border-slate-300 disabled:bg-gray-50 disabled:cursor-not-allowed'
@@ -368,7 +368,7 @@ export default function IvrSimulatorPage() {
                 >
                   <div className="flex items-center justify-between">
                     <span>{action.label}</span>
-                    <span className="text-sm bg-slate-200 px-2 py-1 rounded font-mono">
+                    <span className="text-xs bg-slate-200 px-2 py-1 rounded font-mono">
                       {action.digit}
                     </span>
                   </div>
@@ -380,10 +380,10 @@ export default function IvrSimulatorPage() {
 
         {/* Call Timeline */}
         <WidgetCard>
-          <div className="p-6 border-b border-slate-200">
-            <h2 className="text-xl font-semibold text-gray-900">Call Timeline</h2>
+          <div className="p-4 sm:p-6 border-b border-slate-200">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Call Timeline</h2>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <IVRCallTimeline events={timeline} />
           </div>
         </WidgetCard>
