@@ -7,3 +7,4 @@ export { default as VolunteerActivityChart } from './VolunteerActivityChart';
 export { default as DisasterDistributionChart } from './DisasterDistributionChart';
 export { default as BurnoutRiskChart } from './BurnoutRiskChart';
 export { default as VolunteerDistributionWidget } from './VolunteerDistributionWidget';
+export { default as SyncSummaryPanel } from './SyncSummaryPanel';

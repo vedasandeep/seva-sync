@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- Blue background -->
+  <rect width="192" height="192" fill="#E3F2FD" rx="40"/>
+  
+  <!-- Outer blue circle -->
+  <circle cx="96" cy="96" r="75" fill="none" stroke="#2196F3" stroke-width="3"/>
+  
+  <!-- Shield outline -->
+  <path d="M 96 40 L 65 60 L 65 95 Q 65 125 96 145 Q 127 125 127 95 L 127 60 Z" 
+        fill="none" stroke="#2196F3" stroke-width="3" stroke-linejoin="round"/>
+  
+  <!-- Heart inside shield -->
+  <path d="M 96 70 C 96 70, 80 85, 80 95 C 80 105, 88 113, 96 113 C 104 113, 112 105, 112 95 C 112 85, 96 70, 96 70" 
+        fill="#F44336"/>
+  
+  <!-- Wave at bottom for disaster/relief theme -->
+  <path d="M 65 130 Q 75 125, 85 130 T 105 130 T 125 130" 
+        stroke="#2196F3" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

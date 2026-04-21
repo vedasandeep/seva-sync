@@ -25,6 +25,7 @@ import {
   ivrRoutes,
   matchingRoutes,
   dashboardRoutes,
+  syncRoutes,
 } from './modules';
 
 const app: Application = express();
@@ -108,7 +109,8 @@ app.get('/api', (_req: Request, res: Response) => {
       disasters: '/api/disasters/*',
       ivr: '/api/ivr/*',
       matching: '/api/matching/*',
-      dashboard: '/api/dashboard/*'
+      dashboard: '/api/dashboard/*',
+      sync: '/api/v1/sync/*'
     }
   }, 'SevaSync API');
 });
@@ -121,6 +123,7 @@ app.use('/api/disasters', disasterRoutes);
 app.use('/api/ivr', ivrRoutes);
 app.use('/api/matching', matchingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/v1/sync', syncRoutes);
 
 // ============================================
 // ERROR HANDLING

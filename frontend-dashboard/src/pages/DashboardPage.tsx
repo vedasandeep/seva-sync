@@ -15,6 +15,7 @@ import {
   DisasterDistributionChart,
   BurnoutRiskChart,
   VolunteerDistributionWidget,
+  SyncSummaryPanel,
 } from '../features/dashboard/components';
 import {
   useDashboardSummary,
@@ -32,6 +33,17 @@ const mockSummary = {
   ivrCallsToday: 64,
   syncFailures: 3,
   avgResponseTime: '12 min',
+};
+
+const mockSyncData = {
+  totalVolunteers: 142,
+  volunteersOnline: 128,
+  volunteersOffline: 14,
+  pendingSyncs: 23,
+  syncedToday: 156,
+  conflictsPending: 2,
+  lastSyncTime: '2 minutes ago',
+  syncHealthStatus: 'warning' as const,
 };
 
 const mockActivity = [
@@ -284,6 +296,15 @@ export default function DashboardPage() {
             />
           )}
         </DashboardSection>
+
+        {/* Offline-First Sync Status */}
+        <DashboardGrid cols={1}>
+          {isLoading ? (
+            <SkeletonCard lines={12} className="h-80" />
+          ) : (
+            <SyncSummaryPanel data={mockSyncData} />
+          )}
+        </DashboardGrid>
 
         {/* Operations Row */}
         <DashboardGrid cols={2} gap="lg">

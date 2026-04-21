@@ -6,3 +6,4 @@ export { taskRoutes } from './tasks';
 export { matchingRoutes } from './matching';
 export { ivrRoutes } from './ivr';
 export { dashboardRoutes } from './dashboard';
+export { syncRoutes } from './sync';
