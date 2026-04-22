@@ -19,7 +19,11 @@
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
     "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "demo:reset": "bash scripts/demo-reset.sh",
+    "db:backup": "bash scripts/backup-db.sh",
+    "db:restore": "bash scripts/restore-db.sh",
+    "validate:env": "tsx src/config/validateEnv.ts"
   },
   "keywords": [
     "disaster-management",
