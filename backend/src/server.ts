@@ -17,6 +17,9 @@ import {
 import { requestIdMiddleware, pinoLoggingMiddleware } from './shared/middleware/logging';
 import { sendSuccess } from './shared/utils/responses';
 
+// Services
+import { metricsService } from './services/metricsService';
+
 // WebSocket service
 import { webSocketService } from './services/webSocketService';
 
@@ -105,6 +108,23 @@ app.get('/health', (_req: Request, res: Response) => {
   }, 'Health check passed');
 });
 
+// Metrics endpoint
+app.get('/metrics', async (_req: Request, res: Response) => {
+  try {
+    const metrics = await metricsService.getMetrics();
+    const health = await metricsService.getHealthStatus();
+    sendSuccess(res, {
+      ...metrics,
+      health,
+    }, 'Metrics retrieved successfully');
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to retrieve metrics',
+      message: error.message,
+    });
+  }
+});
+
 // API root
 app.get('/api', (_req: Request, res: Response) => {
   sendSuccess(res, {
@@ -112,6 +132,7 @@ app.get('/api', (_req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
+      metrics: '/metrics',
       auth: '/api/auth/*',
       users: '/api/users/*',
       volunteers: '/api/volunteers/*',
@@ -166,6 +187,7 @@ httpServer.listen(PORT, () => {
   logger.info(`Running on: http://localhost:${PORT}`);
   logger.info(`Environment: ${NODE_ENV}`);
   logger.info(`Health check: http://localhost:${PORT}/health`);
+  logger.info(`Metrics: http://localhost:${PORT}/metrics`);
   logger.info(`Auth API: http://localhost:${PORT}/api/auth`);
   logger.info(`Volunteers API: http://localhost:${PORT}/api/volunteers`);
   logger.info(`Tasks API: http://localhost:${PORT}/api/tasks`);
