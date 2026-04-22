@@ -325,8 +325,8 @@ Complete documentation is organized in the `/docs` folder with dedicated subfold
 ### 📊 Development Progress (Daily Reports)
 Located in `/docs/reports/`:
 - **[Day 1-8 Reports](docs/reports/)** - Chronological development progress
-- **[Day 8 Completion Report](docs/reports/DAY_8_COMPLETION_REPORT.md)** - Latest features ⭐
-- **[Day 5 Quick Reference](docs/reports/DAY_5_QUICK_REFERENCE.md)** - Maps & geo features
+- **[Day 8 Report](docs/reports/DAY_8_REPORT.md)** - Latest features ⭐
+- **[Day 5 Quick Reference](docs/reports/DAY_5_QUICK_REFERENCE_REPORT.md)** - Maps & geo features
 
 ### 🏗️ Technical Guides
 Located in `/docs/guides/`:
@@ -345,7 +345,7 @@ Located in `/docs/archive/`:
 
 ### 🎯 Reading Paths
 - **New developers**: Start with [DAY_1_REPORT](docs/reports/DAY_1_REPORT.md) → [CODEBASE_ANALYSIS](docs/guides/03_CODEBASE_ANALYSIS.md)
-- **Quick overview**: [DAY_8_COMPLETION_REPORT](docs/reports/DAY_8_COMPLETION_REPORT.md)
+- **Quick overview**: [DAY_8_REPORT](docs/reports/DAY_8_REPORT.md)
 - **Demo prep**: [DEMO_CHECKLIST](docs/guides/04_DEMO_CHECKLIST.md) → [DEMO_SCENARIO](docs/guides/05_DEMO_SCENARIO.md)
 - **Maps features**: [MAPS_IMPLEMENTATION](docs/guides/08_MAPS_IMPLEMENTATION.md)
 
