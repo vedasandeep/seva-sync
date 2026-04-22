@@ -317,26 +317,37 @@ curl http://localhost:3000/api/matching/burnout-risks \
 
 ## 📚 Documentation
 
-Complete documentation is organized in the `/docs` folder:
+Complete documentation is organized in the `/docs` folder with dedicated subfolders for easy navigation:
 
-### Quick Links
-- **[Documentation Index](docs/00_INDEX.md)** - Navigate all documentation
-- **[Day 8 Completion Report](docs/DAY_8_COMPLETION_REPORT.md)** - Latest status ⭐
-- **[Authentication Architecture](docs/02_AUTH_ARCHITECTURE.md)** - System design
-- **[Codebase Analysis](docs/03_CODEBASE_ANALYSIS.md)** - Code structure
+### 📖 Main Index
+- **[Documentation Index](docs/README.md)** - Complete navigation guide with reading paths by role
 
-### Daily Reports (Chronological)
-- Day 1-7 reports track development progress
-- Day 8 includes production-ready features
+### 📊 Development Progress (Daily Reports)
+Located in `/docs/reports/`:
+- **[Day 1-8 Reports](docs/reports/)** - Chronological development progress
+- **[Day 8 Completion Report](docs/reports/DAY_8_COMPLETION_REPORT.md)** - Latest features ⭐
+- **[Day 5 Quick Reference](docs/reports/DAY_5_QUICK_REFERENCE.md)** - Maps & geo features
 
-### Technical Docs
-- System architecture and flows
-- Authentication & authorization details
-- Codebase structure and locations
-- Mapping and geographic features
-- Demo preparation guide
+### 🏗️ Technical Guides
+Located in `/docs/guides/`:
+- **[01. Exploration Summary](docs/guides/01_EXPLORATION_SUMMARY.md)** - Project analysis
+- **[02. Auth Architecture](docs/guides/02_AUTH_ARCHITECTURE.md)** - System design
+- **[03. Codebase Analysis](docs/guides/03_CODEBASE_ANALYSIS.md)** - Code structure
+- **[04. Demo Checklist](docs/guides/04_DEMO_CHECKLIST.md)** - Validation points
+- **[05. Demo Scenario](docs/guides/05_DEMO_SCENARIO.md)** - Guided walkthrough
+- **[06. Frontend Map Analysis](docs/guides/06_FRONTEND_MAP_ANALYSIS.md)** - Map features
+- **[07. Geo Infrastructure](docs/guides/07_GEO_INFRASTRUCTURE_ANALYSIS.md)** - Infrastructure
+- **[08. Maps Implementation](docs/guides/08_MAPS_IMPLEMENTATION.md)** - Map integration
 
-All documentation is organized by topic with clear reading paths for different use cases.
+### 📦 Archives (Historical Reference)
+Located in `/docs/archive/`:
+- Complete phase reports and testing guides from earlier development stages
+
+### 🎯 Reading Paths
+- **New developers**: Start with [DAY_1_REPORT](docs/reports/DAY_1_REPORT.md) → [CODEBASE_ANALYSIS](docs/guides/03_CODEBASE_ANALYSIS.md)
+- **Quick overview**: [DAY_8_COMPLETION_REPORT](docs/reports/DAY_8_COMPLETION_REPORT.md)
+- **Demo prep**: [DEMO_CHECKLIST](docs/guides/04_DEMO_CHECKLIST.md) → [DEMO_SCENARIO](docs/guides/05_DEMO_SCENARIO.md)
+- **Maps features**: [MAPS_IMPLEMENTATION](docs/guides/08_MAPS_IMPLEMENTATION.md)
 
 ---
 
