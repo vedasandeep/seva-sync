@@ -313,6 +313,33 @@ curl http://localhost:3000/api/matching/burnout-risks \
 
 ---
 
+---
+
+## 📚 Documentation
+
+Complete documentation is organized in the `/docs` folder:
+
+### Quick Links
+- **[Documentation Index](docs/00_INDEX.md)** - Navigate all documentation
+- **[Day 8 Completion Report](docs/DAY_8_COMPLETION_REPORT.md)** - Latest status ⭐
+- **[Authentication Architecture](docs/02_AUTH_ARCHITECTURE.md)** - System design
+- **[Codebase Analysis](docs/03_CODEBASE_ANALYSIS.md)** - Code structure
+
+### Daily Reports (Chronological)
+- Day 1-7 reports track development progress
+- Day 8 includes production-ready features
+
+### Technical Docs
+- System architecture and flows
+- Authentication & authorization details
+- Codebase structure and locations
+- Mapping and geographic features
+- Demo preparation guide
+
+All documentation is organized by topic with clear reading paths for different use cases.
+
+---
+
 ## License
 
 MIT License
