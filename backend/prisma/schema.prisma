@@ -28,6 +28,11 @@ model User {
 
   // Relations
   createdTasks Task[]
+  notifications Notification[]
+  notificationPreference NotificationPreference?
+  auditLogs AuditLog[]
+  sessions Session[]
+  otps OTP[]
 
   @@index([email])
   @@index([role])
@@ -272,4 +277,135 @@ model IVRLog {
 enum CallDirection {
   INBOUND
   OUTBOUND
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String   // notification event type: login_alert, task_assigned, task_completed, report_ready, invite_received
+  title     String
+  message   String
+  data      Json?    // additional event-specific data
+  read      Boolean  @default(false)
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([read])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  // Notification channels (enabled/disabled per event type)
+  emailEnabled     Boolean @default(true) @map("email_enabled")
+  smsEnabled       Boolean @default(true) @map("sms_enabled")
+  pushEnabled      Boolean @default(true) @map("push_enabled")
+  inAppEnabled     Boolean @default(true) @map("in_app_enabled")
+  // Quiet hours (optional)
+  quietHoursStart  String? @map("quiet_hours_start")   // Format: "HH:mm" (e.g., "22:00")
+  quietHoursEnd    String? @map("quiet_hours_end")     // Format: "HH:mm" (e.g., "08:00")
+  // Per-event type preferences
+  loginAlertEnabled Boolean @default(true) @map("login_alert_enabled")
+  taskAssignedEnabled Boolean @default(true) @map("task_assigned_enabled")
+  taskCompletedEnabled Boolean @default(true) @map("task_completed_enabled")
+  reportReadyEnabled Boolean @default(true) @map("report_ready_enabled")
+  inviteReceivedEnabled Boolean @default(true) @map("invite_received_enabled")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// ============================================
+// AUDIT LOGS
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")                  // User who performed the action (null for system)
+  action    String                                     // user_login, user_logout, user_created, task_created, etc.
+  resource  String                                     // users, tasks, disasters, reports, etc.
+  resourceId String? @map("resource_id")              // ID of the resource affected
+  status    String   @default("success")              // success, failure
+  statusCode Int?    @map("status_code")              // HTTP status code or error code
+  errorMessage String? @map("error_message")          // Error details if failed
+  metadata  Json?                                      // Additional context (e.g., changes, old values, etc.)
+  ipAddress String?  @map("ip_address")               // Request IP address
+  userAgent String?  @map("user_agent")               // User agent string
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([action])
+  @@index([resource])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+// ============================================
+// SESSIONS
+// ============================================
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  deviceName String? @map("device_name")              // Browser, device info
+  ipAddress String?  @map("ip_address")               // IP where session was created
+  userAgent String?  @map("user_agent")               // User agent of the session
+  lastActivityAt DateTime? @map("last_activity_at")   // Last activity timestamp
+  expiresAt DateTime @map("expires_at")               // Session expiration
+  revokedAt DateTime? @map("revoked_at")              // When session was manually revoked
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ============================================
+// OTP (One-Time Passwords)
+// ============================================
+
+model OTP {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")                  // For password reset/verification
+  email     String?                                    // For registration OTP
+  phone     String?                                    // For SMS OTP
+  code      String                                     // 6-digit code
+  type      String                                     // email_verification, sms_verification, password_reset
+  attempts  Int      @default(0)                      // Failed attempts
+  maxAttempts Int    @default(5) @map("max_attempts")
+  usedAt    DateTime? @map("used_at")                 // When OTP was successfully used
+  expiresAt DateTime @map("expires_at")               // OTP expiration (usually 10 minutes)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([phone])
+  @@index([code])
+  @@index([expiresAt])
+  @@map("otps")
 }

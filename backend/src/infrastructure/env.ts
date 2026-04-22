@@ -14,6 +14,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   BASE_URL: z.string().url().default('http://localhost:3000'),
+  APP_URL: z.string().url().default('http://localhost:5173'),
   
   // Database
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid connection string'),
@@ -34,6 +35,10 @@ const envSchema = z.object({
   TWILIO_ACCOUNT_SID: z.string(),
   TWILIO_AUTH_TOKEN: z.string(),
   TWILIO_PHONE_NUMBER: z.string().regex(/^\+?[0-9]{10,}$/, 'Invalid phone number format'),
+  
+  // Email Service (Resend)
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().email().optional().default('noreply@sevasync.app'),
   
   // CORS
   ALLOWED_ORIGINS: z.string().default('http://localhost:5173,http://localhost:5174'),

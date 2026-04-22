@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserRole } from '@prisma/client';
+import { Permission, hasAnyPermission, hasAllPermissions } from '../enums/Permission';
 
 /**
  * Require specific role(s) to access endpoint
@@ -19,6 +20,66 @@ export function requireRole(...allowedRoles: UserRole[]) {
       res.status(403).json({ 
         error: 'Forbidden', 
         message: `Access denied. Required roles: ${allowedRoles.join(', ')}`,
+        userRole: req.user.role
+      });
+      return;
+    }
+    
+    next();
+  };
+}
+
+/**
+ * Require specific permission(s) to access endpoint
+ * Must be used after authenticate() middleware
+ */
+export function requirePermission(...requiredPermissions: Permission[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({ 
+        error: 'Unauthorized', 
+        message: 'Authentication required' 
+      });
+      return;
+    }
+    
+    const userHasAllPermissions = hasAllPermissions(req.user.role, requiredPermissions);
+    
+    if (!userHasAllPermissions) {
+      res.status(403).json({ 
+        error: 'Forbidden', 
+        message: `Access denied. Required permissions: ${requiredPermissions.join(', ')}`,
+        requiredPermissions,
+        userRole: req.user.role
+      });
+      return;
+    }
+    
+    next();
+  };
+}
+
+/**
+ * Require any of the specified permissions
+ * Must be used after authenticate() middleware
+ */
+export function requireAnyPermission(...requiredPermissions: Permission[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({ 
+        error: 'Unauthorized', 
+        message: 'Authentication required' 
+      });
+      return;
+    }
+    
+    const userHasAnyPermission = hasAnyPermission(req.user.role, requiredPermissions);
+    
+    if (!userHasAnyPermission) {
+      res.status(403).json({ 
+        error: 'Forbidden', 
+        message: `Access denied. Required any of: ${requiredPermissions.join(', ')}`,
+        requiredPermissions,
         userRole: req.user.role
       });
       return;

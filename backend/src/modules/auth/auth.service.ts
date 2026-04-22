@@ -3,6 +3,7 @@ import { UserRole } from '@prisma/client';
 import { database as prisma } from '../../infrastructure/database';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../shared/utils/jwt';
 import { encryptPhone, hashPhone } from '../../shared/utils/crypto';
+import emailService from '../../services/emailService';
 
 const SALT_ROUNDS = 12;
 
@@ -68,6 +69,9 @@ export class AuthService {
         createdAt: true,
       }
     });
+    
+    // Send welcome email
+    await emailService.sendWelcomeEmail(user.email, user.name);
     
     // Generate tokens
     const accessToken = generateAccessToken({
@@ -294,6 +298,126 @@ export class AuthService {
     }
     
     return volunteer;
+  }
+
+  /**
+   * Request password reset - sends OTP to email
+   */
+  async requestPasswordReset(email: string) {
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+     // Generate 6-digit OTP
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Create OTP record
+    await prisma.oTP.create({
+      data: {
+        userId: user.id,
+        email: user.email,
+        code,
+        type: 'password_reset',
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      }
+    });
+
+    // Send OTP email
+    await emailService.sendOTPEmail(user.email, code, 'password_reset');
+
+    return {
+      success: true,
+      message: 'OTP sent to your email',
+    };
+  }
+
+  /**
+   * Verify OTP and reset password
+   */
+  async resetPasswordWithOTP(email: string, otp: string, newPassword: string) {
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Find valid OTP
+    const otpRecord = await prisma.oTP.findFirst({
+      where: {
+        email,
+        code: otp,
+        type: 'password_reset',
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      }
+    });
+
+    if (!otpRecord) {
+      throw new Error('Invalid or expired OTP');
+    }
+
+    // Check max attempts
+    if (otpRecord.attempts >= otpRecord.maxAttempts) {
+      throw new Error('Too many failed attempts');
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    // Update user password and mark OTP as used
+    await Promise.all([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash }
+      }),
+      prisma.oTP.update({
+        where: { id: otpRecord.id },
+        data: { usedAt: new Date() }
+      })
+    ]);
+
+    return {
+      success: true,
+      message: 'Password reset successfully',
+    };
+  }
+
+  /**
+   * Send login activity alert email
+   */
+  async sendLoginAlert(userId: string, deviceInfo: string, ipAddress: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) return;
+
+    const activityDetails = `
+      Device: ${deviceInfo}
+      IP Address: ${ipAddress}
+      Time: ${new Date().toLocaleString()}
+    `;
+
+    await emailService.sendActivityAlertEmail(user.email, activityDetails);
+  }
+
+  /**
+   * Send notification email
+   */
+  async sendNotificationEmail(userId: string, notificationTitle: string, notificationMessage: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) return;
+
+    await emailService.sendNotificationEmail(user.email, notificationTitle, notificationMessage);
   }
 }
 

@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import http from 'http';
 
 // Infrastructure
 import { env, validateEnv } from './infrastructure/env';
@@ -16,6 +17,9 @@ import {
 import { requestIdMiddleware, pinoLoggingMiddleware } from './shared/middleware/logging';
 import { sendSuccess } from './shared/utils/responses';
 
+// WebSocket service
+import { webSocketService } from './services/webSocketService';
+
 // Module routes
 import {
   authRoutes,
@@ -27,6 +31,11 @@ import {
   dashboardRoutes,
   syncRoutes,
 } from './modules';
+
+// Additional routes
+import notificationsRoutes from './routes/notifications.routes';
+import auditLogsRoutes from './routes/auditLogs.routes';
+import usersRoutes from './routes/users.routes';
 
 const app: Application = express();
 
@@ -104,11 +113,14 @@ app.get('/api', (_req: Request, res: Response) => {
     endpoints: {
       health: '/health',
       auth: '/api/auth/*',
+      users: '/api/users/*',
       volunteers: '/api/volunteers/*',
       tasks: '/api/tasks/*',
       disasters: '/api/disasters/*',
       ivr: '/api/ivr/*',
       matching: '/api/matching/*',
+      notifications: '/api/notifications/*',
+      auditLogs: '/api/audit-logs/*',
       dashboard: '/api/dashboard/*',
       sync: '/api/v1/sync/*'
     }
@@ -117,11 +129,14 @@ app.get('/api', (_req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/volunteers', volunteerRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/disasters', disasterRoutes);
 app.use('/api/ivr', ivrRoutes);
 app.use('/api/matching', matchingRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/audit-logs', auditLogsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/v1/sync', syncRoutes);
 
@@ -139,7 +154,14 @@ app.use(errorHandler);
 // START SERVER
 // ============================================
 
-const server = app.listen(PORT, () => {
+// Create HTTP server with Express and Socket.io
+const httpServer = http.createServer(app);
+
+// Initialize WebSocket
+const corsOrigins = env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim());
+webSocketService.initializeWebSocket(httpServer, corsOrigins);
+
+httpServer.listen(PORT, () => {
   logger.info(`SevaSync Backend Server started`);
   logger.info(`Running on: http://localhost:${PORT}`);
   logger.info(`Environment: ${NODE_ENV}`);
@@ -150,13 +172,14 @@ const server = app.listen(PORT, () => {
   logger.info(`Disasters API: http://localhost:${PORT}/api/disasters`);
   logger.info(`IVR API: http://localhost:${PORT}/api/ivr`);
   logger.info(`Matching API: http://localhost:${PORT}/api/matching`);
+  logger.info(`WebSocket API: ws://localhost:${PORT}`);
   logger.info('-'.repeat(50));
 });
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully...');
-  server.close(async () => {
+  httpServer.close(async () => {
     await disconnectDatabase();
     logger.info('Server closed');
     process.exit(0);
@@ -165,7 +188,7 @@ process.on('SIGTERM', async () => {
 
 process.on('SIGINT', async () => {
   logger.info('SIGINT received, shutting down gracefully...');
-  server.close(async () => {
+  httpServer.close(async () => {
     await disconnectDatabase();
     logger.info('Server closed');
     process.exit(0);
@@ -173,3 +196,4 @@ process.on('SIGINT', async () => {
 });
 
 export default app;
+export { httpServer };
